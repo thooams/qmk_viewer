@@ -1,12 +1,12 @@
-mod hid;
-mod planck;
-mod ui;
-mod config;
+use qmk_viewer::config::KeymapConfig;
+use qmk_viewer::hid::{HidSource, MockHidSource, Report};
+#[cfg(feature = "rawhid")]
+use qmk_viewer::hid::RawHidSource;
+#[cfg(feature = "qmk_console")]
+use qmk_viewer::hid::QmkConsoleSource;
+use qmk_viewer::planck::{PlanckKeyboard, PlanckLayoutState};
+use qmk_viewer::ui::PlanckViewerApp;
 
-use crate::config::KeymapConfig;
-use crate::hid::{HidSource, MockHidSource, Report};
-use crate::planck::{PlanckKeyboard, PlanckLayoutState};
-use crate::ui::PlanckViewerApp;
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -22,14 +22,14 @@ fn main() {
 
 	// Spawn reader thread (mock by default; real when feature enabled)
 	thread::spawn(move || {
-		#[cfg(feature = "qmk_console")]
-		let mut source: Box<dyn HidSource + Send> = {
-			let src = crate::hid::QmkConsoleSource::new_with_port(maybe_port);
-			Box::new(src)
-		};
+        #[cfg(feature = "qmk_console")]
+        let mut source: Box<dyn HidSource + Send> = {
+            let src = QmkConsoleSource::new_with_port(maybe_port);
+            Box::new(src)
+        };
 
-		#[cfg(all(not(feature = "qmk_console"), feature = "rawhid"))]
-		let mut source: Box<dyn HidSource + Send> = Box::new(crate::hid::RawHidSource::new());
+        #[cfg(all(not(feature = "qmk_console"), feature = "rawhid"))]
+        let mut source: Box<dyn HidSource + Send> = Box::new(RawHidSource::new());
 
 		#[cfg(all(not(feature = "qmk_console"), not(feature = "rawhid")))]
 		let mut source: Box<dyn HidSource + Send> = Box::new(MockHidSource::new());
@@ -48,10 +48,10 @@ fn main() {
 			let layer_count = cfg.layers.len().max(1);
 			keyboard.layer_names = cfg.layer_names.unwrap_or_else(|| (0..layer_count).map(|i| format!("Layer {}", i)).collect());
 			keyboard.raw_legends = cfg.layers.clone();
-			keyboard.legends = cfg.layers
-				.into_iter()
-				.map(|layer| layer.into_iter().map(|s| crate::planck::PlanckLayoutState::normalized_label(&s)).collect())
-				.collect();
+            keyboard.legends = cfg.layers
+                .into_iter()
+                .map(|layer| layer.into_iter().map(|s| PlanckLayoutState::normalized_label(&s)).collect())
+                .collect();
 		}
 	}
 

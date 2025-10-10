@@ -1759,6 +1759,7 @@ dependencies = [
  "hidapi",
  "log",
  "proptest",
+ "regex",
  "serde",
  "serde_json",
  "serialport",

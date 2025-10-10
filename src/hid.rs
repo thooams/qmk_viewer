@@ -67,20 +67,36 @@ impl RawHidSource {
 		Self { ctx, device: None }
 	}
 
-	fn ensure_device(&mut self) {
+    fn ensure_device(&mut self) {
 		if self.device.is_some() { return; }
-		let mut fallback: Option<hidapi::HidDevice> = None;
+		eprintln!("Scanning HID devices...");
 		for dev in self.ctx.device_list() {
 			let product = dev.product_string().unwrap_or_default();
+			let vendor = dev.vendor_id();
+			let product_id = dev.product_id();
+            let usage_page = dev.usage_page();
+            let usage = dev.usage();
+			eprintln!("Found device: VID={:04X} PID={:04X} Product='{}'", vendor, product_id, product);
 			let prod_lc = product.to_lowercase();
-			if prod_lc.contains("planck") || prod_lc.contains("qmk") {
-				if let Ok(d) = dev.open_device(&self.ctx) { self.device = Some(d); return; }
-			}
-			if fallback.is_none() {
-				if let Ok(d) = dev.open_device(&self.ctx) { fallback = Some(d); }
-			}
+            // Accept ONLY Planck Raw HID interface: usage_page 0xFF60, usage 0x61
+            // or explicitly the known Planck VID/PID
+            let is_qmk_rawhid = usage_page == 0xFF60 && usage == 0x61;
+            if is_qmk_rawhid {
+                eprintln!("Trying to open Planck Raw HID device...");
+                match dev.open_device(&self.ctx) {
+                    Ok(d) => {
+                        eprintln!("Successfully opened Planck device (VID={:04X} PID={:04X} usage_page=0x{:04X} usage=0x{:04X})",
+                                  vendor, product_id, usage_page, usage);
+                        self.device = Some(d);
+                        return;
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to open Planck device: {:?}", e);
+                    }
+                }
+            }
 		}
-		if self.device.is_none() { self.device = fallback; }
+        eprintln!("No matching Planck Raw HID device found");
 	}
 }
 
@@ -91,8 +107,16 @@ impl HidSource for RawHidSource {
 		let Some(dev) = self.device.as_ref() else { return None; };
 		let mut buf = [0u8; 64];
 		match dev.read_timeout(&mut buf, 1) {
-			Ok(n) if n > 0 => parse_rawhid_packet(&buf[..n]),
-			_ => None,
+			Ok(n) if n > 0 => {
+				eprintln!("Received {} bytes: {:02X?}", n, &buf[..n]);
+				parse_rawhid_packet(&buf[..n])
+			},
+			Ok(0) => None,
+			Ok(_) => None, // Handle any other Ok values
+			Err(e) => {
+				eprintln!("HID read error: {:?}", e);
+				None
+			}
 		}
 	}
 }

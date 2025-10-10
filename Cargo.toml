@@ -19,6 +19,7 @@ thiserror = "1"
 log = "0.4"
 env_logger = "0.11"
 anyhow = "1"
+regex = "1"
 
 # Raw HID backend (optional at runtime). Rely on platform defaults for features.
 hidapi = { version = "2", optional = true }

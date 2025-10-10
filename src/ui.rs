@@ -6,11 +6,18 @@ use std::sync::mpsc::Receiver;
 pub struct PlanckViewerApp {
 	state: PlanckLayoutState,
 	rx: Receiver<Report>,
+	#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+	manual_pressed: std::collections::HashSet<usize>,
 }
 
 impl PlanckViewerApp {
 	pub fn new(_cc: &eframe::CreationContext<'_>, state: PlanckLayoutState, rx: Receiver<Report>) -> Self {
-		Self { state, rx }
+		Self { 
+			state, 
+			rx,
+			#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+			manual_pressed: std::collections::HashSet::new(),
+		}
 	}
 }
 
@@ -22,6 +29,16 @@ impl eframe::App for PlanckViewerApp {
 			self.state.set_pressed_bits(rep.pressed_bits);
 		}
 
+		#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+		{
+			// In mock mode, use manual pressed keys
+			let mut bits = 0u64;
+			for &idx in &self.manual_pressed {
+				bits |= 1u64 << idx;
+			}
+			self.state.set_pressed_bits(bits);
+		}
+
 		let layer_idx = self.state.active_layer as usize;
 		let layer_name = self.state.keyboard.layer_names.get(layer_idx).cloned().unwrap_or_else(|| format!("Layer {}", layer_idx));
 
@@ -29,6 +46,23 @@ impl eframe::App for PlanckViewerApp {
 			ui.horizontal(|ui| {
 				ui.label("Layer:");
 				ui.label(RichText::new(layer_name.clone()).strong());
+				#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+				{
+					ui.separator();
+					ui.label("Mode: Mock");
+					if ui.button("Layer +").clicked() {
+						let new_layer = (self.state.active_layer + 1) % self.state.keyboard.layer_names.len() as u8;
+						self.state.set_layer(new_layer);
+					}
+					if ui.button("Layer -").clicked() {
+						let new_layer = if self.state.active_layer == 0 {
+							self.state.keyboard.layer_names.len() as u8 - 1
+						} else {
+							self.state.active_layer - 1
+						};
+						self.state.set_layer(new_layer);
+					}
+				}
 			});
 		});
 
@@ -56,8 +90,21 @@ impl eframe::App for PlanckViewerApp {
 						let pressed = self.state.is_pressed(r, c);
 						let is_trns = self.state.is_transparent_key(layer_idx, r, c);
 						let is_fn = self.state.is_function_key(layer_idx, r, c);
-						let resp = ui.add_sized(key_size, egui::Label::new(" ").sense(Sense::hover()));
+						let resp = ui.add_sized(key_size, egui::Label::new(" ").sense(Sense::click()));
 						let rect = resp.rect;
+						
+						#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+						{
+							if resp.clicked() {
+								if let Some(idx) = self.state.index_for(r, c) {
+									if self.manual_pressed.contains(&idx) {
+										self.manual_pressed.remove(&idx);
+									} else {
+										self.manual_pressed.insert(idx);
+									}
+								}
+							}
+						}
 						let bg = if is_trns {
 							Color32::from_rgba_unmultiplied(0, 0, 0, 0)
 						} else if pressed {
