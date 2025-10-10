@@ -29,7 +29,7 @@ pub fn parse_keymap_c(source: &str) -> anyhow::Result<KeymapConfig> {
             let inner = &source[start..end];
             let items = split_items(inner)
                 .into_iter()
-                .map(|s| normalize_token(s.trim()))
+                .map(|s| s.trim().to_string())
                 .collect::<Vec<_>>();
             if !items.is_empty() {
                 layers.push(items);
@@ -49,7 +49,24 @@ pub fn parse_keymap_c(source: &str) -> anyhow::Result<KeymapConfig> {
         while layer.len() < 48 { layer.push("_______".to_string()); }
     }
 
-    let layer_names = Some((0..layers.len()).map(|i| format!("Layer {}", i)).collect());
+    // Try to extract layer bracket names like [NAV], [SYM_SFT]
+    let mut names: Vec<String> = Vec::new();
+    let mut idx = 0usize;
+    for line in source.lines() {
+        let line = line.trim();
+        if line.starts_with('[') {
+            if let Some(end) = line.find(']') {
+                let name = line[1..end].to_string();
+                names.push(name);
+                idx += 1;
+                if idx >= layers.len() { break; }
+            }
+        }
+    }
+    if names.len() < layers.len() {
+        while names.len() < layers.len() { names.push(format!("Layer {}", names.len())); }
+    }
+    let layer_names = Some(names);
     Ok(KeymapConfig {
         keyboard: "planck".to_string(),
         keymap: "keymap.c".to_string(),
