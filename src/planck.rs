@@ -264,12 +264,12 @@ fn translate_token(tok: &str) -> String {
     }
     // Common icons
     match t {
-        "UNDO" => return "Undo".to_string(),
-        "REDO" => return "Redo".to_string(),
-        "COPY" => return "Copy".to_string(),
-        "CUT" => return "Cut".to_string(),
-        "PSTE" | "PASTE" => return "Paste".to_string(),
-        "SAVE" => return "Save".to_string(),
+        "UNDO" => return "↺".to_string(),
+        "REDO" => return "↻".to_string(),
+        "COPY" => return "⎘".to_string(),
+        "CUT" => return "✂".to_string(),
+        "PSTE" | "PASTE" => return "📋".to_string(),
+        "SAVE" => return "💾".to_string(),
         // Quotes and guillemets tokens
         "LAQT" => return "«".to_string(),
         "RAQT" => return "»".to_string(),

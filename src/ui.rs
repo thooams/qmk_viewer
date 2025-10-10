@@ -259,9 +259,9 @@ impl eframe::App for PlanckViewerApp {
                         ui.label(desc);
                         ui.add_space(4.0);
                     };
-                    row(ui, Palette::PEACH, "MT(mod, key)", "Dual role: tap sends key; hold sends modifier. After 2s, key background adopts this color.");
-                    row(ui, Palette::BLUE, "LT(layer, key)", "Dual role: tap sends key; hold activates the layer while held.");
-                    row(ui, Palette::YELLOW, "OSL(layer) ★", "One-shot layer: tap to enable for the next key only.");
+                    row(ui, Palette::PEACH, "MT(mod, key)", "");
+                    row(ui, Palette::BLUE, "LT(layer, key)", "");
+                    row(ui, Palette::YELLOW, "OSL ★", "");
                 });
             });
         });
