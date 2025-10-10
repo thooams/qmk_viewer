@@ -175,9 +175,9 @@ impl PlanckLayoutState {
 			let main = layer_display_name(&self.keyboard, inner);
 			return (main, "MO".to_string());
 		}
-		if let Some(inner) = s.strip_prefix("OSL(").and_then(|t| t.strip_suffix(')')) {
-			let main = layer_display_name(&self.keyboard, inner);
-			return (main, "★".to_string());
+        if let Some(_inner) = s.strip_prefix("OSL(").and_then(|t| t.strip_suffix(')')) {
+            // OSL: show only a star, single line (colored in UI)
+            return ("★".to_string(), String::new());
 		}
 		// Default: single label
 		(Self::normalized_label(s), String::new())
