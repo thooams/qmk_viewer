@@ -22,6 +22,7 @@ pub struct PlanckViewerApp {
 	rx: Receiver<Report>,
     show_debug: bool,
     pressed_started: HashMap<usize, Instant>,
+    text_input: String,
 	#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
 	manual_pressed: std::collections::HashSet<usize>,
 }
@@ -53,6 +54,7 @@ impl PlanckViewerApp {
             rx,
             show_debug: false,
             pressed_started: HashMap::new(),
+            text_input: String::new(),
             #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
             manual_pressed: std::collections::HashSet::new(),
         }
@@ -244,24 +246,41 @@ impl eframe::App for PlanckViewerApp {
                 });
                 ui.add_space(spacing_y);
             }
-            // Single legend under the keyboard (outside rows loop)
+            // Legend and text input under the keyboard (outside rows loop)
             ui.add_space(10.0);
-            egui::Frame::group(ui.style()).show(ui, |ui| {
-                ui.vertical(|ui| {
-                    ui.heading("Legend");
-                    let row = |ui: &mut egui::Ui, color: Color32, title: &str, desc: &str| {
-                        ui.horizontal(|ui| {
-                            let (rect, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
-                            ui.painter().rect_stroke(rect, 4.0, egui::Stroke { width: 2.0, color });
-                            ui.add_space(8.0);
-                            ui.label(RichText::new(title).strong());
-                        });
-                        ui.label(desc);
-                        ui.add_space(4.0);
-                    };
-                    row(ui, Palette::PEACH, "MT(mod, key)", "");
-                    row(ui, Palette::BLUE, "LT(layer, key)", "");
-                    row(ui, Palette::YELLOW, "OSL ★", "");
+            ui.horizontal(|ui| {
+                // Legend on the left
+                egui::Frame::group(ui.style()).show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        ui.heading("Legend");
+                        let row = |ui: &mut egui::Ui, color: Color32, title: &str, desc: &str| {
+                            ui.horizontal(|ui| {
+                                let (rect, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+                                ui.painter().rect_stroke(rect, 4.0, egui::Stroke { width: 2.0, color });
+                                ui.add_space(8.0);
+                                ui.label(RichText::new(title).strong());
+                            });
+                            ui.label(desc);
+                            ui.add_space(4.0);
+                        };
+                        row(ui, Palette::PEACH, "MT(mod, key)", "");
+                        row(ui, Palette::BLUE, "LT(layer, key)", "");
+                        row(ui, Palette::YELLOW, "OSL ★", "");
+                    });
+                });
+                
+                ui.add_space(20.0);
+                
+                // Text input on the right
+                egui::Frame::group(ui.style()).show(ui, |ui| {
+                    ui.vertical(|ui| {
+                        ui.heading("Text Input");
+                        ui.add_space(8.0);
+                        ui.add(egui::TextEdit::multiline(&mut self.text_input)
+                            .desired_width(ui.available_width())
+                            .desired_rows(8)
+                            .hint_text("Type here to test your keyboard layout..."));
+                    });
                 });
             });
         });

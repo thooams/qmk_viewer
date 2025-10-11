@@ -138,8 +138,8 @@ impl PlanckLayoutState {
 		if let Some(inner) = s.strip_prefix("DF(").and_then(|t| t.strip_suffix(')')) {
 			return format!("DF:{}", inner);
 		}
-		if s.starts_with("KF_") { return translate_token(s.trim_start_matches("KF_")); }
-		if s.starts_with("KC_") { return translate_token(s.trim_start_matches("KC_")); }
+		if s.starts_with("KF_") { return translate_token(s); }
+		if s.starts_with("KC_") { return translate_token(s); }
 		if s.starts_with("OS_") { return s.trim_start_matches("OS_").to_string(); }
 		if s.starts_with("SW_") { return s.trim_start_matches("SW_").to_string(); }
 		if s.starts_with("ZM_") { return s.trim_start_matches("ZM_").to_string(); }
@@ -188,8 +188,64 @@ fn translate_token(tok: &str) -> String {
     // Map special names to glyphs/characters
     let t = tok.trim();
     if t == "TRNS" || t == "NO" || t == "_______" { return String::new(); }
-    // French accents and specials
+    
+    // French accents and specials (KF_* keycodes from the keymap)
     match t {
+        "KF_EGRV" => return "è".to_string(),
+        "KF_EACU" => return "é".to_string(),
+        "KF_ECRC" => return "ê".to_string(),
+        "KF_AGRV" => return "à".to_string(),
+        "KF_UGRV" => return "ù".to_string(),
+        "KF_UCRC" => return "û".to_string(),
+        "KF_ICRC" => return "î".to_string(),
+        "KF_ACRC" => return "â".to_string(),
+        "KF_CCED" => return "ç".to_string(),
+        "KF_DIAE" => return "¨".to_string(),
+        "KF_AE" => return "æ".to_string(),
+        "KF_OE" => return "œ".to_string(),
+        "KF_OCRC" => return "ô".to_string(),
+        "KF_LAQT" => return "«".to_string(),
+        "KF_RAQT" => return "»".to_string(),
+        "KF_LDQT" => return "\u{201C}".to_string(), // Left double quotation mark
+        "KF_RDQT" => return "\u{201D}".to_string(), // Right double quotation mark
+        "KF_MDOT" => return "·".to_string(),
+        "KF_BDOT" => return "•".to_string(),
+        "KF_DEG" => return "°".to_string(),
+        "KF_EURO" => return "€".to_string(),
+        "KF_UNDS" => return "_".to_string(),
+        "KF_SUP2" => return "²".to_string(),
+        "KF_IQES" => return "¿".to_string(),
+        "KF_LARW" => return "←".to_string(),
+        "KF_RARW" => return "→".to_string(),
+        "KF_MICR" => return "μ".to_string(),
+        "KF_PSMS" => return "±".to_string(),
+        "KF_CROS" => return "×".to_string(),
+        "KF_QUOT" => return "'".to_string(),
+        "KF_SLCT" => return "⌘A".to_string(),
+        "KF_CUT" => return "⌘X".to_string(),
+        "KF_COPY" => return "⌘C".to_string(),
+        "KF_PSTE" => return "⌘V".to_string(),
+        "KF_SAVE" => return "⌘S".to_string(),
+        "KF_UNDO" => return "⌘Z".to_string(),
+        "KF_REDO" => return "⌘⇧Z".to_string(),
+        // Mappings for keycodes without KF_ prefix (as they appear in the UI)
+        "OCRC" => return "ô".to_string(),
+        "ICRC" => return "î".to_string(),
+        "BDOT" => return "•".to_string(),
+        "IQES" => return "¿".to_string(),
+        "LARW" => return "←".to_string(),
+        "RARW" => return "→".to_string(),
+        "MDOT" => return "·".to_string(),
+        "DEG" => return "°".to_string(),
+        "UCRC" => return "û".to_string(),
+        "EURO" => return "€".to_string(),
+        "ACRC" => return "â".to_string(),
+        "LDQT" => return "\u{201C}".to_string(), // Left double quotation mark
+        "RDQT" => return "\u{201D}".to_string(), // Right double quotation mark
+        "MICR" => return "μ".to_string(),
+        "PSMS" => return "±".to_string(),
+        "CROS" => return "×".to_string(),
+        // Legacy mappings for compatibility
         "EGRV" => return "è".to_string(),
         "EACU" => return "é".to_string(),
         "ECRC" => return "ê".to_string(),
@@ -202,8 +258,34 @@ fn translate_token(tok: &str) -> String {
         "OE" => return "œ".to_string(),
         _ => {}
     }
-    // Brackets / punctuation tokens
+    // Brackets / punctuation tokens (including KF_* variants from SYM layer)
     match t {
+        "KF_LPRN" => return "(".to_string(),
+        "KF_RPRN" => return ")".to_string(),
+        "KF_LBRC" => return "[".to_string(),
+        "KF_RBRC" => return "]".to_string(),
+        "KF_LCBR" => return "{".to_string(),
+        "KF_RCBR" => return "}".to_string(),
+        "KF_LABK" => return "<".to_string(),
+        "KF_RABK" => return ">".to_string(),
+        "KF_SLSH" => return "/".to_string(),
+        "KF_BSLS" => return "\\".to_string(),
+        "KF_PIPE" => return "|".to_string(),
+        "KF_COLN" => return ":".to_string(),
+        "KF_SCLN" => return ";".to_string(),
+        "KF_DQUO" => return "\"".to_string(),
+        "KF_GRV" => return "`".to_string(),
+        "KF_TILD" => return "~".to_string(),
+        "KF_AT" => return "@".to_string(),
+        "KF_HASH" => return "#".to_string(),
+        "KF_DLR" => return "$".to_string(),
+        "KF_PERC" => return "%".to_string(),
+        "KF_AMPR" => return "&".to_string(),
+        "KF_ASTR" => return "*".to_string(),
+        "KF_EQL" => return "=".to_string(),
+        "KF_PLUS" => return "+".to_string(),
+        "KF_CIRC" => return "^".to_string(),
+        // Legacy mappings for compatibility
         "LPRN" => return "(".to_string(),
         "RPRN" => return ")".to_string(),
         "LBRC" => return "[".to_string(),
@@ -235,8 +317,23 @@ fn translate_token(tok: &str) -> String {
         "PLUS" => return "+".to_string(),
         _ => {}
     }
-    // Navigation / control glyphs
+    // Navigation / control glyphs (including special keycodes from NAV layer)
     match t {
+        "NAV_LCK" => return "NAV".to_string(),
+        "SW_GRV" => return "`".to_string(),
+        "SW_TAB" => return "⇥".to_string(),
+        "CW_TOGG" => return "Caps".to_string(),
+        "OS_LALT" => return "⌥".to_string(),
+        "OS_LGUI" => return "⌘".to_string(),
+        "OS_LSFT" => return "⇧".to_string(),
+        "OS_LCTL" => return "⌃".to_string(),
+        "OS_RCTL" => return "⌃".to_string(),
+        "OS_RSFT" => return "⇧".to_string(),
+        "OS_RGUI" => return "⌘".to_string(),
+        "TO(_QWERTY)" => return "QWERTY".to_string(),
+        "KC_PSCR" => return "PrtSc".to_string(),
+        "KC_APP" => return "Menu".to_string(),
+        // Standard navigation
         "LEFT" => return "←".to_string(),
         "RGHT" | "RIGHT" => return "→".to_string(),
         "UP" => return "↑".to_string(),
@@ -262,6 +359,98 @@ fn translate_token(tok: &str) -> String {
         "CAPS" | "CAPSLOCK" => return "⇪".to_string(),
         _ => {}
     }
+    // Basic letter keycodes (KC_A, KC_B, etc.)
+    if t.starts_with("KC_") && t.len() == 4 {
+        let letter = &t[3..4];
+        if letter.chars().next().unwrap().is_ascii_alphabetic() {
+            return letter.to_lowercase();
+        }
+    }
+    
+    // Other KC_ keycodes
+    match t {
+        "KC_1" => return "1".to_string(),
+        "KC_2" => return "2".to_string(),
+        "KC_3" => return "3".to_string(),
+        "KC_4" => return "4".to_string(),
+        "KC_5" => return "5".to_string(),
+        "KC_6" => return "6".to_string(),
+        "KC_7" => return "7".to_string(),
+        "KC_8" => return "8".to_string(),
+        "KC_9" => return "9".to_string(),
+        "KC_0" => return "0".to_string(),
+        "KC_SPC" | "KC_SPACE" => return "␣".to_string(),
+        "KC_ENT" | "KC_ENTER" => return "↩".to_string(),
+        "KC_ESC" => return "⎋".to_string(),
+        "KC_TAB" => return "⇥".to_string(),
+        "KC_BSPC" => return "⌫".to_string(),
+        "KC_DEL" => return "⌦".to_string(),
+        "KC_LEFT" => return "←".to_string(),
+        "KC_RGHT" | "KC_RIGHT" => return "→".to_string(),
+        "KC_UP" => return "↑".to_string(),
+        "KC_DOWN" => return "↓".to_string(),
+        "KC_HOME" => return "⇱".to_string(),
+        "KC_END" => return "⇲".to_string(),
+        "KC_PGUP" | "KC_PG_U" => return "⇞".to_string(),
+        "KC_PGDN" | "KC_PG_D" => return "⇟".to_string(),
+        "KC_LSFT" | "KC_RSFT" => return "⇧".to_string(),
+        "KC_LCTL" | "KC_RCTL" => return "⌃".to_string(),
+        "KC_LALT" | "KC_RALT" => return "⌥".to_string(),
+        "KC_LGUI" | "KC_RGUI" => return "⌘".to_string(),
+        "KC_CAPS" | "KC_CAPSLOCK" => return "⇪".to_string(),
+        "KC_LPRN" => return "(".to_string(),
+        "KC_RPRN" => return ")".to_string(),
+        "KC_LBRC" => return "[".to_string(),
+        "KC_RBRC" => return "]".to_string(),
+        "KC_LCBR" => return "{".to_string(),
+        "KC_RCBR" => return "}".to_string(),
+        "KC_LABK" => return "<".to_string(),
+        "KC_RABK" => return ">".to_string(),
+        "KC_COMM" => return ",".to_string(),
+        "KC_DOT" => return ".".to_string(),
+        "KC_SLSH" => return "/".to_string(),
+        "KC_BSLS" => return "\\".to_string(),
+        "KC_PIPE" => return "|".to_string(),
+        "KC_COLN" => return ":".to_string(),
+        "KC_SCLN" => return ";".to_string(),
+        "KC_QUOT" => return "'".to_string(),
+        "KC_DQUO" => return "\"".to_string(),
+        "KC_GRV" => return "`".to_string(),
+        "KC_TILD" => return "~".to_string(),
+        "KC_AT" => return "@".to_string(),
+        "KC_HASH" => return "#".to_string(),
+        "KC_DLR" => return "$".to_string(),
+        "KC_PERC" => return "%".to_string(),
+        "KC_AMPR" => return "&".to_string(),
+        "KC_ASTR" => return "*".to_string(),
+        "KC_MINS" => return "-".to_string(),
+        "KC_UNDS" => return "_".to_string(),
+        "KC_EQL" => return "=".to_string(),
+        "KC_PLUS" => return "+".to_string(),
+        "KC_EXLM" => return "!".to_string(),
+        "KC_CIRC" => return "^".to_string(),
+        "KC_F1" => return "F1".to_string(),
+        "KC_F2" => return "F2".to_string(),
+        "KC_F3" => return "F3".to_string(),
+        "KC_F4" => return "F4".to_string(),
+        "KC_F5" => return "F5".to_string(),
+        "KC_F6" => return "F6".to_string(),
+        "KC_F7" => return "F7".to_string(),
+        "KC_F8" => return "F8".to_string(),
+        "KC_F9" => return "F9".to_string(),
+        "KC_F10" => return "F10".to_string(),
+        "KC_F11" => return "F11".to_string(),
+        "KC_F12" => return "F12".to_string(),
+        "KC_PSCR" => return "PrtSc".to_string(),
+        "KC_APP" => return "Menu".to_string(),
+        _ => {}
+    }
+    
+    // Also handle single letter tokens (fallback)
+    if t.len() == 1 && t.chars().next().unwrap().is_ascii_alphabetic() {
+        return t.to_lowercase();
+    }
+    
     // Common icons
     match t {
         "UNDO" => return "↺".to_string(),
