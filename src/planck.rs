@@ -379,7 +379,7 @@ fn translate_token(tok: &str) -> String {
         "PGDN" | "PG_D" => return "⇟".to_string(),
         "BSPC" => return "⌫".to_string(),
         "DEL" => return "⌦".to_string(),
-        "ENT" | "ENTER" => return "↩".to_string(),
+        "ENT" | "ENTER" => return "↵".to_string(),
         "ESC" => return "⎋".to_string(),
         "TAB" => return "⇥".to_string(),
         "SPC" | "SPACE" => return "␣".to_string(),
@@ -415,7 +415,7 @@ fn translate_token(tok: &str) -> String {
         "KC_9" => return "9".to_string(),
         "KC_0" => return "0".to_string(),
         "KC_SPC" | "KC_SPACE" => return "␣".to_string(),
-        "KC_ENT" | "KC_ENTER" => return "↩".to_string(),
+        "KC_ENT" | "KC_ENTER" => return "↵".to_string(),
         "KC_ESC" => return "⎋".to_string(),
         "KC_TAB" => return "⇥".to_string(),
         "KC_BSPC" => return "⌫".to_string(),
@@ -500,7 +500,7 @@ fn translate_token(tok: &str) -> String {
         // Superscript 2
         "SUP2" | "SUP" => return "²".to_string(),
         // Enter explicit
-        "ENT" | "ENTER" => return "↩".to_string(),
+        "ENT" | "ENTER" => return "↵".to_string(),
         _ => {}
     }
     sanitize_glyphs(t)
@@ -569,7 +569,8 @@ fn sanitize_glyphs(s: &str) -> String {
             '⇟' => "PgDn",
             '⌫' => "Bksp",
             '⌦' => "Del",
-            '↩' => "Enter",
+            '↩' => "↵",
+            '↵' => "↵",
             '⎋' => "Esc",
             '⇥' => "Tab",
             '␣' => "Space",
