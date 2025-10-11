@@ -21,6 +21,8 @@ pub struct PlanckViewerApp {
 	state: PlanckLayoutState,
 	rx: Receiver<Report>,
     show_debug: bool,
+    show_legend: bool,
+    show_textarea: bool,
     pressed_started: HashMap<usize, Instant>,
     text_input: String,
 	#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
@@ -53,6 +55,8 @@ impl PlanckViewerApp {
             state,
             rx,
             show_debug: false,
+            show_legend: false,
+            show_textarea: false,
             pressed_started: HashMap::new(),
             text_input: String::new(),
             #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
@@ -87,8 +91,32 @@ impl eframe::App for PlanckViewerApp {
                 ui.label("Layer:");
                 ui.label(RichText::new(format!("{} (#{})", layer_name.clone(), layer_idx)).strong());
                 ui.separator();
-                let btn = if self.show_debug { "Hide debug" } else { "Show debug" };
-                if ui.button(btn).clicked() { self.show_debug = !self.show_debug; }
+                
+                // Style pour les boutons de contrôle
+                let debug_btn = if self.show_debug { "🔍 Hide Debug" } else { "🔍 Show Debug" };
+                if ui.add(egui::Button::new(debug_btn)
+                    .fill(Palette::OVERLAY)
+                    .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                    .rounding(egui::Rounding::same(6.0))).clicked() { 
+                    self.show_debug = !self.show_debug; 
+                }
+                
+                let legend_btn = if self.show_legend { "📋 Hide Legend" } else { "📋 Show Legend" };
+                if ui.add(egui::Button::new(legend_btn)
+                    .fill(Palette::OVERLAY)
+                    .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                    .rounding(egui::Rounding::same(6.0))).clicked() { 
+                    self.show_legend = !self.show_legend; 
+                }
+                
+                let textarea_btn = if self.show_textarea { "📝 Hide Textarea" } else { "📝 Show Textarea" };
+                if ui.add(egui::Button::new(textarea_btn)
+                    .fill(Palette::OVERLAY)
+                    .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                    .rounding(egui::Rounding::same(6.0))).clicked() { 
+                    self.show_textarea = !self.show_textarea; 
+                }
+                
 				#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
 				{
 					ui.separator();
@@ -123,12 +151,23 @@ impl eframe::App for PlanckViewerApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-			let rows = self.state.keyboard.rows;
-			let cols = self.state.keyboard.cols;
-            let key_size = Vec2::new(56.0, 56.0);
-			let spacing_y = 8.0;
-            let mut font_id = ui.style().text_styles[&egui::TextStyle::Body].clone();
-            font_id.size *= 1.15;
+            // Ajouter plus d'espace autour du clavier
+            ui.add_space(20.0);
+            
+            // Centrer le clavier avec un conteneur
+            ui.vertical_centered(|ui| {
+                ui.add_space(20.0);
+                
+                // Conteneur avec padding pour le clavier
+                egui::Frame::none()
+                    .inner_margin(egui::Margin::same(30.0))
+                    .show(ui, |ui| {
+                        let rows = self.state.keyboard.rows;
+                        let cols = self.state.keyboard.cols;
+                        let key_size = Vec2::new(56.0, 56.0);
+                        let spacing_y = 8.0;
+                        let mut font_id = ui.style().text_styles[&egui::TextStyle::Body].clone();
+                        font_id.size *= 1.15;
 
             // Track press start times for color transition (MT keys after 2s)
             let total_keys = rows * cols;
@@ -243,46 +282,59 @@ impl eframe::App for PlanckViewerApp {
                             );
                         }
                     }
-                });
-                ui.add_space(spacing_y);
-            }
-            // Legend and text input under the keyboard (outside rows loop)
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                // Legend on the left
-                egui::Frame::group(ui.style()).show(ui, |ui| {
-                    ui.vertical(|ui| {
-                        ui.heading("Legend");
-                        let row = |ui: &mut egui::Ui, color: Color32, title: &str, desc: &str| {
-                            ui.horizontal(|ui| {
-                                let (rect, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
-                                ui.painter().rect_stroke(rect, 4.0, egui::Stroke { width: 2.0, color });
-                                ui.add_space(8.0);
-                                ui.label(RichText::new(title).strong());
-                            });
-                            ui.label(desc);
-                            ui.add_space(4.0);
-                        };
-                        row(ui, Palette::PEACH, "MT(mod, key)", "");
-                        row(ui, Palette::BLUE, "LT(layer, key)", "");
-                        row(ui, Palette::YELLOW, "OSL ★", "");
-                    });
+                        });
+                        ui.add_space(spacing_y);
+                    }
                 });
                 
                 ui.add_space(20.0);
-                
-                // Text input on the right
-                egui::Frame::group(ui.style()).show(ui, |ui| {
-                    ui.vertical(|ui| {
-                        ui.heading("Text Input");
-                        ui.add_space(8.0);
-                        ui.add(egui::TextEdit::multiline(&mut self.text_input)
-                            .desired_width(ui.available_width())
-                            .desired_rows(8)
-                            .hint_text("Type here to test your keyboard layout..."));
-                    });
-                });
             });
+            
+            // Legend and text input under the keyboard (outside the centered container)
+            if self.show_legend || self.show_textarea {
+                ui.add_space(20.0);
+                ui.horizontal(|ui| {
+                    // Legend on the left (if enabled)
+                    if self.show_legend {
+                        egui::Frame::group(ui.style()).show(ui, |ui| {
+                            ui.vertical(|ui| {
+                                ui.heading("Legend");
+                                let row = |ui: &mut egui::Ui, color: Color32, title: &str, desc: &str| {
+                                    ui.horizontal(|ui| {
+                                        let (rect, _) = ui.allocate_exact_size(egui::vec2(18.0, 18.0), egui::Sense::hover());
+                                        ui.painter().rect_stroke(rect, 4.0, egui::Stroke { width: 2.0, color });
+                                        ui.add_space(8.0);
+                                        ui.label(RichText::new(title).strong());
+                                    });
+                                    ui.label(desc);
+                                    ui.add_space(4.0);
+                                };
+                                row(ui, Palette::PEACH, "MT(mod, key)", "");
+                                row(ui, Palette::BLUE, "LT(layer, key)", "");
+                                row(ui, Palette::YELLOW, "OSL ★", "");
+                            });
+                        });
+                        
+                        if self.show_textarea {
+                            ui.add_space(20.0);
+                        }
+                    }
+                    
+                    // Text input on the right (if enabled)
+                    if self.show_textarea {
+                        egui::Frame::group(ui.style()).show(ui, |ui| {
+                            ui.vertical(|ui| {
+                                ui.heading("Text Input");
+                                ui.add_space(8.0);
+                                ui.add(egui::TextEdit::multiline(&mut self.text_input)
+                                    .desired_width(ui.available_width())
+                                    .desired_rows(8)
+                                    .hint_text("Type here to test your keyboard layout..."));
+                            });
+                        });
+                    }
+                });
+            }
         });
         
 
