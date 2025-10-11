@@ -113,6 +113,25 @@ impl PlanckLayoutState {
 		matches!(self.raw_legend_at(layer, row, col), Some(r) if r.trim_start().starts_with("OSL("))
 	}
 
+	pub fn is_shift_pressed(&self) -> bool {
+		// Check if any shift key is pressed by looking for MOD_LSFT, MOD_RSFT, KC_LSFT, KC_RSFT, etc.
+		for row in 0..self.keyboard.rows {
+			for col in 0..self.keyboard.cols {
+				if self.is_pressed(row, col) {
+					if let Some(raw) = self.raw_legend_at(self.active_layer as usize, row, col) {
+						let s = raw.trim();
+						if s.contains("MOD_LSFT") || s.contains("MOD_RSFT") || 
+						   s.contains("KC_LSFT") || s.contains("KC_RSFT") ||
+						   s.contains("LSFT") || s.contains("RSFT") {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		false
+	}
+
 	pub fn normalized_label(raw: &str) -> String {
 		// Collapse common QMK-style tokens to readable labels
 		let s = raw.trim();
@@ -151,11 +170,18 @@ impl PlanckLayoutState {
 		let s = raw.trim();
 		// Transparent / empty
 		if s == "KC_TRNS" || s == "KC_NO" || s == "_______" { return (String::new(), String::new()); }
+		
+		let shift_pressed = self.is_shift_pressed();
+		
 		// MT(mod, key) => main=key, sub=mod glyph
 		if let Some(inner) = s.strip_prefix("MT(").and_then(|t| t.strip_suffix(')')) {
 			let parts: Vec<&str> = inner.split(',').map(|p| p.trim()).collect();
 			if parts.len() >= 2 {
-				let main = Self::normalized_label(parts[1]);
+				let mut main = Self::normalized_label(parts[1]);
+				// Apply shift transformation to letters
+				if shift_pressed && main.len() == 1 && main.chars().next().unwrap().is_ascii_lowercase() {
+					main = main.to_uppercase();
+				}
 				let sub = mod_to_glyph(parts[0]);
 				return (main, sub);
 			}
@@ -164,7 +190,11 @@ impl PlanckLayoutState {
 		if let Some(inner) = s.strip_prefix("LT(").and_then(|t| t.strip_suffix(')')) {
 			let parts: Vec<&str> = inner.split(',').map(|p| p.trim()).collect();
 			if parts.len() >= 2 {
-				let main = Self::normalized_label(parts[1]);
+				let mut main = Self::normalized_label(parts[1]);
+				// Apply shift transformation to letters
+				if shift_pressed && main.len() == 1 && main.chars().next().unwrap().is_ascii_lowercase() {
+					main = main.to_uppercase();
+				}
 				let layer_tok = parts[0];
 				let sub = layer_display_name(&self.keyboard, layer_tok);
 				return (main, sub);
@@ -180,7 +210,12 @@ impl PlanckLayoutState {
             return ("★".to_string(), String::new());
 		}
 		// Default: single label
-		(Self::normalized_label(s), String::new())
+		let mut main = Self::normalized_label(s);
+		// Apply shift transformation to letters
+		if shift_pressed && main.len() == 1 && main.chars().next().unwrap().is_ascii_lowercase() {
+			main = main.to_uppercase();
+		}
+		(main, String::new())
 	}
 }
 
