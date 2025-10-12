@@ -3,7 +3,13 @@
 # Build script for Linux AppImage
 set -e
 
-echo "Building QMK Keyboard Viewer for Linux..."
+# Change to the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
+echo "🐧 Building QMK Keyboard Viewer for Linux..."
+echo "📂 Working directory: $(pwd)"
 
 # Clean previous builds
 rm -rf dist/linux

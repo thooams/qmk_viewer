@@ -26,7 +26,7 @@ https://github.com/user-attachments/assets/screen.mov
 ./scripts/build-all.sh
 
 # Or build specifically:
-./scripts/build-macos-complete.sh    # macOS
+./scripts/build-macos.sh             # macOS
 ./scripts/build-linux.sh             # Linux
 ./scripts/build-windows.ps1          # Windows (PowerShell)
 ```
@@ -280,8 +280,7 @@ src/
 
 scripts/
 ├── build-all.sh         # Build for all platforms
-├── build-macos.sh       # macOS build
-├── build-macos-complete.sh # Complete macOS build with icons
+├── build-macos.sh       # macOS build with icons
 ├── build-linux.sh       # Linux build
 ├── build-windows.bat    # Windows build (batch)
 ├── build-windows.ps1    # Windows build (PowerShell)

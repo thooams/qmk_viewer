@@ -2,7 +2,11 @@
 REM Build script for Windows executable with icon
 setlocal enabledelayedexpansion
 
-echo Building QMK Keyboard Viewer for Windows...
+REM Change to the project root directory
+cd /d "%~dp0\.."
+
+echo 🪟 Building QMK Keyboard Viewer for Windows...
+echo 📂 Working directory: %CD%
 
 REM Clean previous builds
 if exist dist\windows rmdir /s /q dist\windows

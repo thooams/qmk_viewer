@@ -1,18 +1,28 @@
 #!/bin/bash
 
-# Build script for macOS bundle
+# Unified macOS build script
 set -e
 
-echo "Building QMK Keyboard Viewer for macOS..."
+# Change to the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
+echo "🍎 Building QMK Keyboard Viewer for macOS..."
+echo "📂 Working directory: $(pwd)"
 
 # Clean previous builds
+echo "🧹 Cleaning previous builds..."
 rm -rf dist/macos
 mkdir -p dist/macos
 
 # Create app bundle structure
-mkdir -p "dist/macos/QMK Keyboard Viewer.app/Contents/{MacOS,Resources}"
+echo "📁 Creating app bundle structure..."
+mkdir -p "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS"
+mkdir -p "dist/macos/QMK Keyboard Viewer.app/Contents/Resources"
 
 # Create Info.plist
+echo "📋 Creating Info.plist..."
 cat > "dist/macos/QMK Keyboard Viewer.app/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -46,10 +56,19 @@ cat > "dist/macos/QMK Keyboard Viewer.app/Contents/Info.plist" << 'EOF'
 </plist>
 EOF
 
-# Create iconset
+# Create iconset directory
+echo "🎨 Creating icon set..."
 mkdir -p dist/macos/qmk-viewer.iconset
 
+# Check if source icon exists
+if [ ! -f "src/assets/images/qmk-viewer.png" ]; then
+    echo "❌ Error: Source icon not found at src/assets/images/qmk-viewer.png"
+    echo "   Please ensure the icon file exists before building."
+    exit 1
+fi
+
 # Generate different icon sizes
+echo "🖼️  Generating icon sizes..."
 sips -z 16 16 src/assets/images/qmk-viewer.png --out dist/macos/qmk-viewer.iconset/icon_16x16.png
 sips -z 32 32 src/assets/images/qmk-viewer.png --out dist/macos/qmk-viewer.iconset/icon_16x16@2x.png
 sips -z 32 32 src/assets/images/qmk-viewer.png --out dist/macos/qmk-viewer.iconset/icon_32x32.png
@@ -62,28 +81,53 @@ sips -z 512 512 src/assets/images/qmk-viewer.png --out dist/macos/qmk-viewer.ico
 sips -z 1024 1024 src/assets/images/qmk-viewer.png --out dist/macos/qmk-viewer.iconset/icon_512x512@2x.png
 
 # Create .icns file
+echo "📦 Creating .icns file..."
 iconutil -c icns dist/macos/qmk-viewer.iconset -o dist/macos/qmk-viewer.icns
 
-# Ensure Resources directory exists
-mkdir -p "dist/macos/QMK Keyboard Viewer.app/Contents/Resources"
+# Copy icon to app bundle
+echo "📋 Copying icon to app bundle..."
 cp dist/macos/qmk-viewer.icns "dist/macos/QMK Keyboard Viewer.app/Contents/Resources/"
 
-# Build the application
-echo "Building Rust application..."
+# Build the Rust application
+echo "🦀 Building Rust application..."
 cargo build --release
 
+# Check if build was successful
+if [ ! -f "target/release/qmk_viewer" ]; then
+    echo "❌ Error: Rust build failed - executable not found"
+    exit 1
+fi
+
 # Copy executable to bundle
+echo "📦 Copying executable to app bundle..."
 cp target/release/qmk_viewer "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/"
 
-# Make executable and set proper permissions
+# Set proper permissions
+echo "🔐 Setting permissions..."
 chmod +x "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer"
-
-# Set bundle permissions
 chmod -R 755 "dist/macos/QMK Keyboard Viewer.app"
 
-# Remove quarantine attribute (allows running unsigned apps)
+# Remove quarantine attribute
+echo "🛡️  Removing quarantine attribute..."
 xattr -d com.apple.quarantine "dist/macos/QMK Keyboard Viewer.app" 2>/dev/null || true
+xattr -d com.apple.metadata:kMDItemWhereFroms "dist/macos/QMK Keyboard Viewer.app" 2>/dev/null || true
 
-echo "macOS bundle created successfully!"
-echo "Location: dist/macos/QMK Keyboard Viewer.app"
-echo "You can now double-click the app to run it."
+# Verify the app bundle
+echo "✅ Verifying app bundle..."
+if [ -f "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer" ] && [ -f "dist/macos/QMK Keyboard Viewer.app/Contents/Resources/qmk-viewer.icns" ]; then
+    echo ""
+    echo "🎉 macOS bundle created successfully!"
+    echo "📍 Location: dist/macos/QMK Keyboard Viewer.app"
+    echo "🎯 You can now double-click the app to run it."
+    echo ""
+    echo "📊 Bundle size: $(du -sh 'dist/macos/QMK Keyboard Viewer.app' | cut -f1)"
+    echo ""
+    echo "💡 If you get a security warning:"
+    echo "   1. Right-click the app and select 'Open'"
+    echo "   2. Or run: open 'dist/macos/QMK Keyboard Viewer.app'"
+    echo "   3. Or run: ./scripts/fix-macos-app.sh"
+else
+    echo "❌ Error: App bundle verification failed"
+    echo "   Missing executable or icon file"
+    exit 1
+fi

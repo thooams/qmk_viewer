@@ -3,7 +3,13 @@ param(
     [switch]$WithIcon = $false
 )
 
-Write-Host "Building QMK Keyboard Viewer for Windows..." -ForegroundColor Green
+# Change to the project root directory
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent $ScriptDir
+Set-Location $ProjectRoot
+
+Write-Host "🪟 Building QMK Keyboard Viewer for Windows..." -ForegroundColor Green
+Write-Host "📂 Working directory: $(Get-Location)" -ForegroundColor Cyan
 
 # Clean previous builds
 if (Test-Path "dist\windows") {

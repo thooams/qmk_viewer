@@ -12,7 +12,7 @@ This document explains how to build QMK Keyboard Viewer for different platforms.
 
 ### macOS
 ```bash
-./scripts/build-macos-complete.sh
+./scripts/build-macos.sh
 ```
 Creates a `.app` bundle with proper icon support and fixes common macOS issues.
 
