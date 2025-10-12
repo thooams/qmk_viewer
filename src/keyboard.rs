@@ -124,8 +124,8 @@ impl KeyboardState {
 
 	pub fn is_pressed(&self, row: usize, col: usize) -> bool {
 		match self.index_for(row, col) {
-			Some(i) => ((self.pressed_bits >> i) & 1) == 1,
-			None => false,
+			Some(i) if i < 64 => ((self.pressed_bits >> i) & 1) == 1,
+			_ => false,
 		}
 	}
 

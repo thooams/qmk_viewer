@@ -264,7 +264,7 @@ impl eframe::App for KeyboardViewerApp {
                 ui.add_space(5.0);
                 ui.label(format!("Active layer index: {}", layer_idx));
                 ui.monospace(format!("Pressed bits: 0x{:012X}", self.state.pressed_bits));
-                let mut pressed_indices: Vec<usize> = (0..(self.state.keyboard.rows * self.state.keyboard.cols))
+                let mut pressed_indices: Vec<usize> = (0..(self.state.keyboard.rows * self.state.keyboard.cols).min(64))
                     .filter(|i| ((self.state.pressed_bits >> i) & 1) == 1)
                     .collect();
                 pressed_indices.sort_unstable();
@@ -353,7 +353,7 @@ impl eframe::App for KeyboardViewerApp {
 
             // Track press start times for color transition (MT keys after 2s)
             let total_keys = rows * cols;
-            for i in 0..total_keys {
+            for i in 0..total_keys.min(64) { // Limit to 64 bits to avoid overflow
                 let pressed = ((self.state.pressed_bits >> i) & 1) == 1;
                 if pressed {
                     self.pressed_started.entry(i).or_insert_with(Instant::now);

@@ -5,30 +5,29 @@
 
 /// Translate a QMK keycode token to a human-readable label
 pub fn translate_token(tok: &str) -> String {
-    // Map special names to glyphs/characters
     let t = tok.trim();
     if t == "TRNS" || t == "NO" || t == "_______" || t == "KC_TRNS" || t == "KC_NO" { return String::new(); }
-
+    
     // French accents and specials (KF_* keycodes from the keymap)
     if let Some(result) = translate_french_accents(t) {
-        return sanitize_glyphs(&result);
+        return result;
     }
-
+    
     // Brackets / punctuation tokens
     if let Some(result) = translate_punctuation(t) {
-        return sanitize_glyphs(&result);
+        return result;
     }
-
-    // Navigation / control glyphs
+    
+    // Navigation / control
     if let Some(result) = translate_navigation(t) {
-        return sanitize_glyphs(&result);
+        return result;
     }
-
+    
     // Modifiers / locks
     if let Some(result) = translate_modifiers(t) {
-        return sanitize_glyphs(&result);
+        return result;
     }
-
+    
     // Basic letter keycodes (KC_A, KC_B, etc.)
     if t.starts_with("KC_") && t.len() == 4 {
         let letter = &t[3..4];
@@ -36,23 +35,23 @@ pub fn translate_token(tok: &str) -> String {
             return letter.to_lowercase();
         }
     }
-
+    
     // Other KC_ keycodes
     if let Some(result) = translate_kc_keycodes(t) {
-        return sanitize_glyphs(&result);
+        return result;
     }
-
+    
     // Also handle single letter tokens (fallback)
     if t.len() == 1 && t.chars().next().unwrap().is_ascii_alphabetic() {
         return t.to_lowercase();
     }
-
+    
     // Common icons
     if let Some(result) = translate_icons(t) {
-        return sanitize_glyphs(&result);
+        return result;
     }
-
-    sanitize_glyphs(t)
+    
+    t.to_string()
 }
 
 fn translate_french_accents(t: &str) -> Option<String> {
@@ -81,8 +80,8 @@ fn translate_french_accents(t: &str) -> Option<String> {
         "KF_UNDS" => Some("_".to_string()),
         "KF_SUP2" => Some("²".to_string()),
         "KF_IQES" => Some("¿".to_string()),
-        "KF_LARW" => Some("←".to_string()),
-        "KF_RARW" => Some("→".to_string()),
+        "KF_LARW" => Some("Left".to_string()),
+        "KF_RARW" => Some("Right".to_string()),
         "KF_MICR" => Some("μ".to_string()),
         "KF_PSMS" => Some("±".to_string()),
         "KF_CROS" => Some("×".to_string()),
@@ -99,8 +98,8 @@ fn translate_french_accents(t: &str) -> Option<String> {
         "ICRC" => Some("î".to_string()),
         "BDOT" => Some("•".to_string()),
         "IQES" => Some("¿".to_string()),
-        "LARW" => Some("←".to_string()),
-        "RARW" => Some("→".to_string()),
+        "LARW" => Some("Left".to_string()),
+        "RARW" => Some("Right".to_string()),
         "MDOT" => Some("·".to_string()),
         "DEG" => Some("°".to_string()),
         "UCRC" => Some("û".to_string()),
@@ -166,44 +165,44 @@ fn translate_navigation(t: &str) -> Option<String> {
     match t {
         "NAV_LCK" => Some("NAV".to_string()),
         "SW_GRV" => Some("`".to_string()),
-        "SW_TAB" => Some("⇥".to_string()),
+        "SW_TAB" => Some("Tab".to_string()),
         "CW_TOGG" => Some("Caps".to_string()),
-        "OS_LALT" => Some("⌥".to_string()),
-        "OS_LGUI" => Some("⌘".to_string()),
-        "OS_LSFT" => Some("⇧".to_string()),
-        "OS_LCTL" => Some("⌃".to_string()),
-        "OS_RCTL" => Some("⌃".to_string()),
-        "OS_RSFT" => Some("⇧".to_string()),
-        "OS_RGUI" => Some("⌘".to_string()),
+        "OS_LALT" => Some("Alt".to_string()),
+        "OS_LGUI" => Some("gui".to_string()),
+        "OS_LSFT" => Some("Shift".to_string()),
+        "OS_LCTL" => Some("Ctrl".to_string()),
+        "OS_RCTL" => Some("Ctrl".to_string()),
+        "OS_RSFT" => Some("Shift".to_string()),
+        "OS_RGUI" => Some("gui".to_string()),
         "TO(_QWERTY)" => Some("QWERTY".to_string()),
         "KC_PSCR" => Some("PrtSc".to_string()),
         "KC_APP" => Some("Menu".to_string()),
         // Standard navigation
-        "LEFT" => Some("←".to_string()),
-        "RGHT" | "RIGHT" => Some("→".to_string()),
-        "UP" => Some("↑".to_string()),
-        "DOWN" => Some("↓".to_string()),
-        "HOME" => Some("⇱".to_string()),
-        "END" => Some("⇲".to_string()),
-        "PGUP" | "PG_U" | "PGUPD" => Some("⇞".to_string()),
-        "PGDN" | "PG_D" => Some("⇟".to_string()),
-        "BSPC" => Some("⌫".to_string()),
-        "DEL" => Some("⌦".to_string()),
-        "ENT" | "ENTER" => Some("↵".to_string()),
-        "ESC" => Some("⎋".to_string()),
-        "TAB" => Some("⇥".to_string()),
-        "SPC" | "SPACE" => Some("␣".to_string()),
+        "LEFT" => Some("Left".to_string()),
+        "RGHT" | "RIGHT" => Some("Right".to_string()),
+        "UP" => Some("Up".to_string()),
+        "DOWN" => Some("Down".to_string()),
+        "HOME" => Some("Home".to_string()),
+        "END" => Some("End".to_string()),
+        "PGUP" | "PG_U" | "PGUPD" => Some("PgUp".to_string()),
+        "PGDN" | "PG_D" => Some("PgDn".to_string()),
+        "BSPC" => Some("Bksp".to_string()),
+        "DEL" => Some("Del".to_string()),
+        "ENT" | "ENTER" => Some("Enter".to_string()),
+        "ESC" => Some("Esc".to_string()),
+        "TAB" => Some("Tab".to_string()),
+        "SPC" | "SPACE" => Some("Space".to_string()),
         _ => None,
     }
 }
 
 fn translate_modifiers(t: &str) -> Option<String> {
     match t {
-        "LSFT" | "RSFT" | "SFT" | "SHIFT" => Some("⇧".to_string()),
-        "LCTL" | "RCTL" | "CTL" | "CTRL" | "LCTRL" | "RCTRL" => Some("⌃".to_string()),
-        "LALT" | "RALT" | "ALT" | "LALT_T" => Some("⌥".to_string()),
-        "LGUI" | "RGUI" | "GUI" | "CMD" | "WIN" => Some("⌘".to_string()),
-        "CAPS" | "CAPSLOCK" => Some("⇪".to_string()),
+        "LSFT" | "RSFT" | "SFT" | "SHIFT" => Some("Shift".to_string()),
+        "LCTL" | "RCTL" | "CTL" | "CTRL" | "LCTRL" | "RCTRL" => Some("Ctrl".to_string()),
+        "LALT" | "RALT" | "ALT" | "LALT_T" => Some("Alt".to_string()),
+        "LGUI" | "RGUI" | "GUI" | "CMD" | "WIN" => Some("gui".to_string()),
+        "CAPS" | "CAPSLOCK" => Some("Caps".to_string()),
         _ => None,
     }
 }
@@ -223,29 +222,29 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         "KC_0" => Some("0".to_string()),
 
         // Special keys
-        "KC_SPC" | "KC_SPACE" => Some("␣".to_string()),
-        "KC_ENT" | "KC_ENTER" => Some("↵".to_string()),
-        "KC_ESC" => Some("⎋".to_string()),
-        "KC_TAB" => Some("⇥".to_string()),
-        "KC_BSPC" => Some("⌫".to_string()),
-        "KC_DEL" => Some("⌦".to_string()),
+        "KC_SPC" | "KC_SPACE" => Some("Space".to_string()),
+        "KC_ENT" | "KC_ENTER" => Some("Enter".to_string()),
+        "KC_ESC" => Some("Esc".to_string()),
+        "KC_TAB" => Some("Tab".to_string()),
+        "KC_BSPC" => Some("Bksp".to_string()),
+        "KC_DEL" => Some("Del".to_string()),
 
         // Navigation
-        "KC_LEFT" => Some("←".to_string()),
-        "KC_RGHT" | "KC_RIGHT" => Some("→".to_string()),
-        "KC_UP" => Some("↑".to_string()),
-        "KC_DOWN" => Some("↓".to_string()),
-        "KC_HOME" => Some("⇱".to_string()),
-        "KC_END" => Some("⇲".to_string()),
-        "KC_PGUP" | "KC_PG_U" => Some("⇞".to_string()),
-        "KC_PGDN" | "KC_PG_D" => Some("⇟".to_string()),
+        "KC_LEFT" => Some("Left".to_string()),
+        "KC_RGHT" | "KC_RIGHT" => Some("Right".to_string()),
+        "KC_UP" => Some("Up".to_string()),
+        "KC_DOWN" => Some("Down".to_string()),
+        "KC_HOME" => Some("Home".to_string()),
+        "KC_END" => Some("End".to_string()),
+        "KC_PGUP" | "KC_PG_U" => Some("PgUp".to_string()),
+        "KC_PGDN" | "KC_PG_D" => Some("PgDn".to_string()),
 
         // Modifiers
-        "KC_LSFT" | "KC_RSFT" => Some("⇧".to_string()),
-        "KC_LCTL" | "KC_RCTL" => Some("⌃".to_string()),
-        "KC_LALT" | "KC_RALT" => Some("⌥".to_string()),
-        "KC_LGUI" | "KC_RGUI" => Some("⌘".to_string()),
-        "KC_CAPS" | "KC_CAPSLOCK" => Some("⇪".to_string()),
+        "KC_LSFT" | "KC_RSFT" => Some("Shift".to_string()),
+        "KC_LCTL" | "KC_RCTL" => Some("Ctrl".to_string()),
+        "KC_LALT" | "KC_RALT" => Some("Alt".to_string()),
+        "KC_LGUI" | "KC_RGUI" => Some("gui".to_string()),
+        "KC_CAPS" | "KC_CAPSLOCK" => Some("Caps".to_string()),
 
         // Punctuation
         "KC_LPRN" => Some("(".to_string()),
@@ -327,7 +326,7 @@ fn translate_icons(t: &str) -> Option<String> {
         // Superscript 2
         "SUP2" | "SUP" => Some("²".to_string()),
         // Enter explicit
-        "ENT" | "ENTER" => Some("↵".to_string()),
+        "ENT" | "ENTER" => Some("Enter".to_string()),
         _ => None,
     }
 }
@@ -335,20 +334,19 @@ fn translate_icons(t: &str) -> Option<String> {
 /// Convert modifier token to glyph representation
 pub fn mod_to_glyph(m: &str) -> String {
     let mm = m.trim();
-    let g = match mm {
+    match mm {
         // QMK-style MOD_* constants
-        "MOD_LSFT" | "MOD_RSFT" | "MOD_MASK_SHIFT" => "⇧".to_string(),
-        "MOD_LCTL" | "MOD_RCTL" | "MOD_MASK_CTRL" => "⌃".to_string(),
-        "MOD_LALT" | "MOD_RALT" | "MOD_MASK_ALT" => "⌥".to_string(),
-        "MOD_LGUI" | "MOD_RGUI" | "MOD_MASK_GUI" => "⌘".to_string(),
+        "MOD_LSFT" | "MOD_RSFT" | "MOD_MASK_SHIFT" => "Shift".to_string(),
+        "MOD_LCTL" | "MOD_RCTL" | "MOD_MASK_CTRL" => "Ctrl".to_string(),
+        "MOD_LALT" | "MOD_RALT" | "MOD_MASK_ALT" => "Alt".to_string(),
+        "MOD_LGUI" | "MOD_RGUI" | "MOD_MASK_GUI" => "gui".to_string(),
         // KC_* fallbacks
-        "KC_LSFT" | "KC_RSFT" => "⇧".to_string(),
-        "KC_LCTL" | "KC_RCTL" => "⌃".to_string(),
-        "KC_LALT" | "KC_RALT" => "⌥".to_string(),
-        "KC_LGUI" | "KC_RGUI" => "⌘".to_string(),
+        "KC_LSFT" | "KC_RSFT" => "Shift".to_string(),
+        "KC_LCTL" | "KC_RCTL" => "Ctrl".to_string(),
+        "KC_LALT" | "KC_RALT" => "Alt".to_string(),
+        "KC_LGUI" | "KC_RGUI" => "gui".to_string(),
         other => translate_token(other),
-    };
-    sanitize_glyphs(&g)
+    }
 }
 
 /// Get display name for layer token
@@ -362,7 +360,7 @@ pub fn layer_display_name(token: &str) -> String {
         "SYM_SFT" => "Symbols Shift",
         "NAV" => "Nav",
         "NAV_ALT" => "Nav Alt",
-        "NAV_GUI" => "Nav GUI",
+        "NAV_GUI" => "Nav gui",
         "NAV_CTL" => "Nav Ctrl",
         "NUM" => "Num",
         "MOS" => "Mouse",
@@ -371,54 +369,6 @@ pub fn layer_display_name(token: &str) -> String {
     friendly.to_string()
 }
 
-/// Sanitize glyphs to avoid rendering issues
-fn sanitize_glyphs(s: &str) -> String {
-    // Replace uncommon glyphs with ASCII fallbacks to avoid tofu squares
-    let mut out = String::with_capacity(s.len());
-    for ch in s.chars() {
-        let repl = match ch {
-            // macOS modifiers and UI arrows
-            '⌘' => "CMD",
-            '⌥' => "ALT",
-            '⌃' => "CTRL",
-            '⇧' => "SHIFT",
-            '⇪' => "CAPS",
-            '←' => "<",
-            '→' => ">",
-            '↑' => "^",
-            '↓' => "v",
-            '⇱' => "Home",
-            '⇲' => "End",
-            '⇞' => "PgUp",
-            '⇟' => "PgDn",
-            '⌫' => "Bksp",
-            '⌦' => "Del",
-            '↩' => "↵",
-            '↵' => "↵",
-            '⎋' => "Esc",
-            '⇥' => "Tab",
-            '␣' => "Space",
-            // Geometric placeholders that render as tofu
-            '□' | '■' | '◻' | '◼' | '▢' | '▣' => "",
-            // Keep common Latin accents we intend to show
-            c if c == 'é' || c == 'è' || c == 'ê' || c == 'à' || c == 'ù' || c == 'ç' || c == 'æ' || c == 'œ' => {
-                out.push(c);
-                continue;
-            }
-            _ => "",
-        };
-        if repl.is_empty() {
-            // keep ASCII printable
-            if ch.is_ascii() {
-                out.push(ch);
-            }
-        } else {
-            if !out.is_empty() { out.push(' '); }
-            out.push_str(repl);
-        }
-    }
-    out
-}
 
 #[cfg(test)]
 mod tests {
@@ -439,18 +389,18 @@ mod tests {
 
     #[test]
     fn test_modifier_keycodes() {
-        assert_eq!(translate_token("KC_LSFT"), "SHIFT");
-        assert_eq!(translate_token("KC_LCTL"), "CTRL");
-        assert_eq!(translate_token("KC_LALT"), "ALT");
-        assert_eq!(translate_token("KC_LGUI"), "CMD");
+        assert_eq!(translate_token("KC_LSFT"), "Shift");
+        assert_eq!(translate_token("KC_LCTL"), "Ctrl");
+        assert_eq!(translate_token("KC_LALT"), "Alt");
+        assert_eq!(translate_token("KC_LGUI"), "gui");
     }
 
     #[test]
     fn test_navigation_keycodes() {
-        assert_eq!(translate_token("KC_LEFT"), "<");
-        assert_eq!(translate_token("KC_RGHT"), ">");
-        assert_eq!(translate_token("KC_UP"), "^");
-        assert_eq!(translate_token("KC_DOWN"), "v");
+        assert_eq!(translate_token("KC_LEFT"), "Left");
+        assert_eq!(translate_token("KC_RGHT"), "Right");
+        assert_eq!(translate_token("KC_UP"), "Up");
+        assert_eq!(translate_token("KC_DOWN"), "Down");
     }
 
     #[test]
@@ -479,9 +429,9 @@ mod tests {
 
     #[test]
     fn test_mod_to_glyph() {
-        assert_eq!(mod_to_glyph("MOD_LSFT"), "SHIFT");
-        assert_eq!(mod_to_glyph("MOD_LCTL"), "CTRL");
-        assert_eq!(mod_to_glyph("KC_LALT"), "ALT");
+        assert_eq!(mod_to_glyph("MOD_LSFT"), "Shift");
+        assert_eq!(mod_to_glyph("MOD_LCTL"), "Ctrl");
+        assert_eq!(mod_to_glyph("KC_LALT"), "Alt");
     }
 
     #[test]
