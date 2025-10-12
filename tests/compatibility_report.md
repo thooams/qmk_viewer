@@ -1,0 +1,221 @@
+# QMK Keyboard Compatibility Report
+
+Generated on: 2025-10-12 14:58:50 UTC
+
+## Summary
+
+- **Total keyboards tested**: 200
+- **Successful**: 200
+- **Failed**: 0
+- **Success rate**: 100.0%
+
+## Performance
+
+- **Total parse time**: 0ms
+- **Average parse time**: 0.0ms
+
+## Successful Keyboards
+
+| Keyboard | Layers | Keys/Layer | Parse Time (ms) |
+|----------|--------|------------|-----------------|
+| 0_sixty | 6 | 60 | 0 |
+| 0xc7 | 2 | 61 | 0 |
+| 0xcb | 4 | 9 | 0 |
+| 10bleoledhub | 2 | 10 | 0 |
+| 1k | 1 | 1 | 0 |
+| 1upkeyboards | 3 | 61 | 0 |
+| 25keys | 4 | 42 | 0 |
+| 2key2crawl | 1 | 11 | 0 |
+| 30wer | 2 | 38 | 0 |
+| 3keyecosystem | 4 | 2 | 0 |
+| 3w6 | 6 | 36 | 0 |
+| 40percentclub | 2 | 50 | 0 |
+| 45_ats | 3 | 50 | 0 |
+| 4by3 | 1 | 12 | 0 |
+| 4pplet | 2 | 64 | 0 |
+| 5keys | 1 | 5 | 0 |
+| 7c8 | 5 | 60 | 0 |
+| 8pack | 2 | 8 | 0 |
+| 9key | 2 | 9 | 0 |
+| a_dux | 5 | 34 | 0 |
+| a_jazz | 2 | 85 | 0 |
+| abatskeyboardclub | 1 | 87 | 0 |
+| abko | 2 | 82 | 0 |
+| abstract | 1 | 6 | 0 |
+| acekeyboard | 2 | 61 | 0 |
+| acheron | 2 | 62 | 0 |
+| ada | 2 | 70 | 0 |
+| adafruit | 2 | 13 | 0 |
+| adelheid | 2 | 82 | 0 |
+| adkb96 | 1 | 96 | 0 |
+| adpenrose | 4 | 25 | 0 |
+| aeboards | 4 | 101 | 0 |
+| afternoonlabs | 3 | 66 | 0 |
+| ah | 2 | 63 | 0 |
+| ai | 1 | 19 | 0 |
+| ai03 | 2 | 64 | 0 |
+| aidansmithdotdev | 4 | 48 | 0 |
+| akb | 3 | 46 | 0 |
+| akegata_denki | 2 | 61 | 0 |
+| akko | 6 | 87 | 0 |
+| al1 | 2 | 84 | 0 |
+| alas | 2 | 64 | 0 |
+| aleblazer | 4 | 70 | 0 |
+| alf | 2 | 68 | 0 |
+| alhenkb | 1 | 20 | 0 |
+| aliceh66 | 1 | 93 | 0 |
+| alpaca | 2 | 71 | 0 |
+| alpha | 4 | 28 | 0 |
+| alpine65 | 2 | 67 | 0 |
+| alps64 | 1 | 64 | 0 |
+| alt34 | 1 | 34 | 0 |
+| amag23 | 2 | 23 | 0 |
+| amjkeyboard | 4 | 42 | 0 |
+| amptrics | 4 | 10 | 0 |
+| an_achronism | 4 | 70 | 0 |
+| anavi | 1 | 5 | 0 |
+| andean_condor | 1 | 48 | 0 |
+| annepro2 | 3 | 61 | 0 |
+| ano | 2 | 96 | 0 |
+| anomalykb | 2 | 67 | 0 |
+| aos | 2 | 85 | 0 |
+| aozora | 2 | 69 | 0 |
+| arabica37 | 4 | 44 | 0 |
+| archerkeyboard | 2 | 67 | 0 |
+| archetype | 2 | 65 | 0 |
+| ares | 2 | 65 | 0 |
+| argyle | 2 | 63 | 0 |
+| arisu | 2 | 67 | 0 |
+| arrayperipherals | 2 | 5 | 0 |
+| arrowmechanics | 1 | 97 | 0 |
+| artemis | 1 | 85 | 0 |
+| ash1800 | 2 | 103 | 0 |
+| ash_xiix | 2 | 103 | 0 |
+| ashwing66 | 3 | 67 | 0 |
+| ask55 | 2 | 66 | 0 |
+| at_at | 2 | 66 | 0 |
+| atlantis | 2 | 81 | 0 |
+| atlas_65 | 4 | 67 | 0 |
+| atomic | 6 | 75 | 0 |
+| atreus | 3 | 42 | 0 |
+| atreus62 | 3 | 62 | 0 |
+| atreyu | 4 | 60 | 0 |
+| atset | 3 | 1 | 0 |
+| atxkb | 2 | 66 | 0 |
+| aurora65 | 2 | 67 | 0 |
+| automata02 | 2 | 64 | 0 |
+| avalanche | 3 | 62 | 0 |
+| aves60 | 2 | 66 | 0 |
+| aves65 | 4 | 70 | 0 |
+| axolstudio | 2 | 87 | 0 |
+| aya | 3 | 70 | 0 |
+| b_sides | 4 | 41 | 0 |
+| bacca70 | 2 | 74 | 0 |
+| baguette | 2 | 67 | 0 |
+| bahm | 1 | 91 | 0 |
+| baion_808 | 1 | 90 | 0 |
+| bajjak | 3 | 90 | 0 |
+| balloondogcaps | 2 | 9 | 0 |
+| bandominedoni | 3 | 76 | 0 |
+| bantam44 | 3 | 44 | 0 |
+| barleycorn_smd | 2 | 83 | 0 |
+| barracuda | 4 | 33 | 0 |
+| basekeys | 3 | 69 | 0 |
+| basketweave | 2 | 69 | 0 |
+| bbrfkr | 4 | 69 | 0 |
+| bear_face | 4 | 83 | 0 |
+| beatervan | 6 | 44 | 0 |
+| beekeeb | 6 | 36 | 0 |
+| bemeier | 3 | 66 | 0 |
+| bestway | 2 | 71 | 0 |
+| bfake | 3 | 64 | 0 |
+| biacco42 | 3 | 56 | 0 |
+| binepad | 3 | 3 | 0 |
+| bioi | 2 | 61 | 0 |
+| black_hellebore | 1 | 61 | 0 |
+| blackplum | 2 | 68 | 0 |
+| blank | 2 | 62 | 0 |
+| blank_tehnologii | 2 | 62 | 0 |
+| blaster75 | 2 | 81 | 0 |
+| blockboy | 4 | 81 | 0 |
+| blockey | 2 | 62 | 0 |
+| blu | 2 | 3 | 0 |
+| bluebell | 1 | 36 | 0 |
+| boardrun | 2 | 70 | 0 |
+| boardsource | 2 | 12 | 0 |
+| boardwalk | 2 | 70 | 0 |
+| bobpad | 2 | 6 | 0 |
+| bolsa | 4 | 65 | 0 |
+| bop | 1 | 120 | 0 |
+| boston | 2 | 129 | 0 |
+| boston_meetup | 4 | 13 | 0 |
+| botanicalkeyboards | 1 | 1 | 0 |
+| box75 | 1 | 84 | 0 |
+| bpiphany | 1 | 4 | 0 |
+| bredworks | 2 | 89 | 0 |
+| bschwind | 2 | 75 | 0 |
+| bt66tech | 3 | 61 | 0 |
+| bthlabs | 1 | 9 | 0 |
+| bubble75 | 4 | 81 | 0 |
+| budgy | 1 | 34 | 0 |
+| buildakb | 2 | 66 | 0 |
+| butterkeebs | 1 | 18 | 0 |
+| buzzard | 6 | 40 | 0 |
+| cablecardesigns | 1 | 90 | 0 |
+| caffeinated | 2 | 69 | 0 |
+| canary | 5 | 63 | 0 |
+| cannonkeys | 4 | 54 | 0 |
+| cantor | 1 | 42 | 0 |
+| capsunlocked | 2 | 24 | 0 |
+| carbo65 | 2 | 67 | 0 |
+| cata | 4 | 34 | 0 |
+| catch22 | 2 | 22 | 0 |
+| centromere | 3 | 42 | 0 |
+| cest73 | 2 | 110 | 0 |
+| chalice | 4 | 68 | 0 |
+| chaos65 | 4 | 67 | 0 |
+| charue | 2 | 70 | 0 |
+| chavdai40 | 2 | 44 | 0 |
+| checkerboards | 3 | 42 | 0 |
+| cherrybstudio | 2 | 109 | 0 |
+| cheshire | 3 | 66 | 0 |
+| chew | 1 | 34 | 0 |
+| chickenman | 2 | 63 | 0 |
+| chill | 2 | 89 | 0 |
+| chlx | 2 | 67 | 0 |
+| chocofly | 3 | 61 | 0 |
+| chocv | 1 | 36 | 0 |
+| chord | 1 | 30 | 0 |
+| chosfox | 4 | 84 | 0 |
+| chouchou | 1 | 20 | 0 |
+| chromatonemini | 3 | 43 | 0 |
+| churrosoft | 1 | 8 | 0 |
+| cipulot | 3 | 74 | 0 |
+| citrus | 2 | 66 | 0 |
+| ck60i | 4 | 65 | 0 |
+| ckeys | 7 | 16 | 0 |
+| clap_studio | 2 | 61 | 0 |
+| clawsome | 1 | 12 | 0 |
+| clickety_split | 4 | 58 | 0 |
+| clog | 4 | 34 | 0 |
+| cloud_macro | 1 | 5 | 0 |
+| clueboard | 2 | 17 | 0 |
+| cmm_studio | 2 | 67 | 0 |
+| coarse | 2 | 65 | 0 |
+| coban | 1 | 12 | 0 |
+| compensator | 2 | 120 | 0 |
+| compound | 2 | 62 | 0 |
+| concreteflowers | 2 | 73 | 0 |
+| contender | 3 | 26 | 0 |
+| contra | 7 | 47 | 0 |
+| controllerworks | 4 | 42 | 0 |
+| converter | 2 | 96 | 0 |
+| cool836a | 4 | 36 | 0 |
+| copenhagen_click | 1 | 1 | 0 |
+| cornia | 4 | 42 | 0 |
+| coseyfannitutti | 1 | 17 | 0 |
+| cosmo65 | 2 | 66 | 0 |
+| cradio | 4 | 34 | 0 |
+| craftwalk | 3 | 14 | 0 |
+| crawlpad | 2 | 16 | 0 |
+

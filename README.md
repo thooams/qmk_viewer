@@ -265,6 +265,49 @@ qmk flash -kb your_keyboard -km your_keymap
 - **Legend Panel**: Shows keycode mappings and translations
 - **Debug Panel**: Technical information about keyboard state
 
+## Compatibility Testing
+
+QMK Keyboard Viewer includes comprehensive compatibility testing to ensure it works with keyboards from the QMK firmware repository.
+
+### Running Compatibility Tests
+
+```bash
+# 1. Collect keymaps from QMK firmware (requires ~/qmk_firmware)
+./scripts/collect-qmk-keymaps.sh
+
+# 2. Run parsing compatibility tests
+cargo test qmk_compatibility --release -- --nocapture
+
+# 3. Run UI rendering tests
+cargo test ui_rendering --release -- --nocapture
+
+# 4. Generate comprehensive report
+cargo test compatibility_report --release -- --nocapture
+```
+
+### Test Reports
+
+The compatibility tests generate several reports:
+
+- **`tests/compatibility_report.md`** - Parsing compatibility results
+- **`tests/ui_rendering_report.md`** - UI rendering compatibility results  
+- **`tests/comprehensive_compatibility_report.md`** - Combined analysis with recommendations
+
+### Test Coverage
+
+The compatibility tests cover:
+
+- **Parsing Tests**: Verify that keymap.c files can be parsed without errors
+- **UI Rendering Tests**: Ensure keyboards can be displayed in the UI
+- **Performance Tests**: Measure parsing and rendering times
+- **Error Analysis**: Categorize and analyze parsing failures
+
+### Requirements
+
+- QMK firmware repository at `~/qmk_firmware`
+- At least 4GB RAM for testing large numbers of keyboards
+- 10-30 minutes for complete test suite (depending on hardware)
+
 ## Project Structure
 
 ```
@@ -288,14 +331,19 @@ scripts/
 ├── build-linux.sh       # Linux build
 ├── build-windows.bat    # Windows build (batch)
 ├── build-windows.ps1    # Windows build (PowerShell)
-└── fix-macos-app.sh     # macOS app fix script
+├── fix-macos-app.sh     # macOS app fix script
+└── collect-qmk-keymaps.sh # Collect keymaps from QMK firmware
 
 tests/
 ├── files/               # Test keymap files
 │   ├── test_keymap.json
 │   ├── test_keymap.c
-│   └── thooams.json
-└── *.rs                 # Test modules
+│   ├── thooams.json
+│   └── *_keymap.c       # Collected QMK keymaps
+├── qmk_compatibility.rs # QMK keyboard compatibility tests
+├── ui_rendering.rs      # UI rendering compatibility tests
+├── compatibility_report.rs # Comprehensive reporting
+└── *.rs                 # Other test modules
 ```
 
 ## Build Artifacts

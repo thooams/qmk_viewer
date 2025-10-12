@@ -23,6 +23,7 @@ regex = "1"
 image = "0.24"
 dirs = "5"
 rfd = "0.12"
+chrono = { version = "0.4", features = ["serde"] }
 
 # Raw HID backend (optional at runtime). Rely on platform defaults for features.
 hidapi = { version = "2", optional = true }
