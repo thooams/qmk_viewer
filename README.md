@@ -2,6 +2,10 @@
 
 A cross-platform application for viewing and visualizing QMK keyboard layouts with support for any QMK-compatible keyboard.
 
+## Demo
+
+https://github.com/user-attachments/assets/screen.mov
+
 ## Features
 
 - **Universal QMK Support**: Works with any QMK keyboard by auto-detecting dimensions
@@ -39,12 +43,87 @@ cargo run
 # Windows: Run the .exe file
 ```
 
+## Usage
+
+### Command Line Arguments
+
+```bash
+# Run with a specific keymap file
+cargo run path/to/keymap.json
+cargo run path/to/keymap.c
+
+# Run with serial port (QMK Console feature)
+cargo run --features qmk_console path/to/keymap.json /dev/ttyUSB0
+
+# Run with Raw HID support
+cargo run --features rawhid path/to/keymap.json
+```
+
+### Build Features
+
+The application supports optional features for different input sources:
+
+```bash
+# Default build (Mock HID - for testing/development)
+cargo run
+
+# With Raw HID support (USB keyboard input)
+cargo run --features rawhid
+
+# With QMK Console support (Serial port input)
+cargo run --features qmk_console
+
+# With both features enabled
+cargo run --features rawhid,qmk_console
+```
+
+### Arguments
+
+- **`<keymap_file>`** (optional): Path to a keymap file to load on startup
+  - Supported formats: `.json`, `.c`, `.h`
+  - If not provided, the application will show a drag & drop zone
+  - If a saved keymap exists, it will be loaded automatically
+
+- **`<serial_port>`** (optional, requires `qmk_console` feature): Serial port for QMK Console input
+  - Examples: `/dev/ttyUSB0` (Linux), `COM3` (Windows), `/dev/cu.usbserial-*` (macOS)
+  - Only used when `qmk_console` feature is enabled
+
+### Examples
+
+```bash
+# Load a specific keymap file
+cargo run tests/files/test_keymap.json
+
+# Load keymap with Raw HID support
+cargo run --features rawhid tests/files/test_keymap.c
+
+# Load keymap with QMK Console on specific port
+cargo run --features qmk_console tests/files/test_keymap.json /dev/ttyUSB0
+
+# Run without any keymap (shows drag & drop zone)
+cargo run
+```
+
 ### Loading Keymap Files
 
-1. **Start the application**
-2. **Enter file path** in the "File:" input field, or click "📂 Browse"
-3. **Click "✅ Load"** to load the keymap
-4. **View the status** - success or error messages will appear below the buttons
+The application provides multiple ways to load keymap files:
+
+#### Drag & Drop (Recommended)
+1. **Start the application** (without arguments)
+2. **Drag and drop** a keymap file onto the central area
+3. **Or click** the drop zone to browse for a file
+4. The keymap will load automatically and be saved for future sessions
+
+#### Command Line
+```bash
+# Load a keymap file directly
+cargo run path/to/keymap.json
+```
+
+#### File Browser
+1. **Click** on the drag & drop zone
+2. **Select** your keymap file from the file browser
+3. The keymap will load automatically
 
 **Supported formats:**
 - `.json` - QMK JSON keymap files
@@ -53,6 +132,135 @@ cargo run
 **Example files:**
 - `tests/files/test_keymap.json` - Sample JSON keymap
 - `tests/files/test_keymap.c` - Sample C keymap
+
+### QMK Keyboard Configuration
+
+To enable real-time communication between your QMK keyboard and the application, you need to configure your keyboard firmware:
+
+#### Raw HID Support
+
+Add the following to your `rules.mk`:
+```makefile
+# Enable Raw HID for real-time communication
+RAW_ENABLE = yes
+```
+
+Add this to your `keymap.c`:
+```c
+#include "raw_hid.h"
+
+// Send keyboard state to the application
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+    // Handle incoming data from the application if needed
+}
+
+// Call this function to send keyboard state
+void send_keyboard_state(void) {
+    uint8_t data[32] = {0};
+    
+    // Pack the data: [layer][pressed_bits...]
+    data[0] = get_highest_layer(layer_state);
+    
+    // Pack pressed keys into bits (up to 32 keys)
+    for (int i = 0; i < 32 && i < MATRIX_ROWS * MATRIX_COLS; i++) {
+        uint8_t row = i / MATRIX_COLS;
+        uint8_t col = i % MATRIX_COLS;
+        if (matrix_is_on(row, col)) {
+            data[1 + (i / 8)] |= (1 << (i % 8));
+        }
+    }
+    
+    raw_hid_send(data, 32);
+}
+
+// Call this in your matrix scan or layer change functions
+void matrix_scan_user(void) {
+    static uint32_t last_send = 0;
+    if (timer_elapsed32(last_send) > 50) { // Send every 50ms
+        send_keyboard_state();
+        last_send = timer_read32();
+    }
+}
+```
+
+#### QMK Console Support
+
+Add the following to your `rules.mk`:
+```makefile
+# Enable console for serial communication
+CONSOLE_ENABLE = yes
+```
+
+Add this to your `keymap.c`:
+```c
+#include "print.h"
+
+// Send keyboard state via console
+void send_console_state(void) {
+    // Send layer and pressed keys
+    uprintf("LAYER:%d\n", get_highest_layer(layer_state));
+    
+    // Send pressed keys
+    for (int row = 0; row < MATRIX_ROWS; row++) {
+        for (int col = 0; col < MATRIX_COLS; col++) {
+            if (matrix_is_on(row, col)) {
+                uprintf("PRESS:%d,%d\n", row, col);
+            }
+        }
+    }
+    uprintf("END\n");
+}
+
+// Call this in your matrix scan function
+void matrix_scan_user(void) {
+    static uint32_t last_send = 0;
+    if (timer_elapsed32(last_send) > 100) { // Send every 100ms
+        send_console_state();
+        last_send = timer_read32();
+    }
+}
+```
+
+#### Building and Flashing
+
+After adding the configuration:
+
+```bash
+# Build your keyboard firmware
+qmk compile -kb your_keyboard -km your_keymap
+
+# Flash to your keyboard
+qmk flash -kb your_keyboard -km your_keymap
+```
+
+**Note**: The application will automatically detect and connect to your keyboard when the appropriate feature is enabled (`--features rawhid` or `--features qmk_console`).
+
+### Interface Features
+
+#### Top Panel
+- **Layer Information**: Shows current layer name and number
+- **Layer Navigation**: Previous/Next layer buttons (when not using real HID)
+- **Mode Indicator**: Shows "Mock" mode for development
+- **Control Buttons**:
+  - **Textarea**: Toggle text input area for testing
+  - **Legend**: Toggle key legend display
+  - **Debug**: Show debug information (pressed keys, layer data)
+  - **Unload**: Remove current keymap and return to drag & drop zone
+
+#### Central Area
+- **Drag & Drop Zone**: Appears when no keymap is loaded
+  - Drop keymap files directly onto the zone
+  - Click to open file browser
+  - Supports `.json`, `.c`, `.h` files
+- **Keyboard Display**: Shows loaded keyboard layout
+  - Dynamic sizing for any keyboard dimensions
+  - Layer switching with visual feedback
+  - Key press visualization (when connected to real keyboard)
+
+#### Side Panels (Optional)
+- **Textarea Panel**: Text input for testing key mappings
+- **Legend Panel**: Shows keycode mappings and translations
+- **Debug Panel**: Technical information about keyboard state
 
 ## Project Structure
 
