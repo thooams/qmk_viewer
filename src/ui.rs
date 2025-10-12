@@ -1,6 +1,7 @@
 use crate::hid::Report;
 use crate::keyboard::KeyboardState;
 use crate::config::KeymapConfig;
+use crate::config_persistence::{save_keymap_file, clear_saved_keymap};
 use eframe::egui::{self, Color32, Context, RichText, Sense, Vec2};
 
 // Catppuccin Mocha palette (subset)
@@ -26,9 +27,7 @@ pub struct KeyboardViewerApp {
     show_textarea: bool,
     pressed_started: HashMap<usize, Instant>,
     text_input: String,
-    file_path: String,
-    file_loading: bool,
-    file_status: String,
+    keyboard_loaded: bool,
 	#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
 	manual_pressed: std::collections::HashSet<usize>,
 }
@@ -63,40 +62,31 @@ impl KeyboardViewerApp {
             show_textarea: false,
             pressed_started: HashMap::new(),
             text_input: String::new(),
-            file_path: String::new(),
-            file_loading: false,
-            file_status: String::new(),
+            keyboard_loaded: true, // Will be set correctly in main.rs
             #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
             manual_pressed: std::collections::HashSet::new(),
         }
     }
     
-    fn load_keymap_file(&mut self) {
-        if self.file_path.is_empty() {
-            return;
-        }
-        
-        self.file_loading = true;
-        
-        // Try to load the file
-        match std::fs::read_to_string(&self.file_path) {
+    fn load_keymap_from_path(&mut self, path: &str) -> bool {
+        match std::fs::read_to_string(path) {
             Ok(content) => {
                 // Determine file type by extension
-                let is_json = self.file_path.ends_with(".json");
-                let is_c = self.file_path.ends_with(".c") || self.file_path.ends_with(".h");
+                let is_json = path.ends_with(".json");
+                let is_c = path.ends_with(".c") || path.ends_with(".h");
                 
-                if is_json {
+                let result = if is_json {
                     // Try to parse as JSON
                     match serde_json::from_str::<KeymapConfig>(&content) {
                         Ok(config) => {
                             // Update the keyboard state with new layout
                             self.state = KeyboardState::new(config.to_keyboard_layout());
-                            self.file_status = format!("✅ Loaded JSON keymap: {} layers", config.layers.len());
-                            println!("✅ Successfully loaded JSON keymap from: {}", self.file_path);
+                            println!("✅ Successfully loaded JSON keymap from: {}", path);
+                            true
                         }
                         Err(e) => {
-                            self.file_status = format!("❌ JSON parse error: {}", e);
                             eprintln!("❌ Failed to parse JSON keymap: {}", e);
+                            false
                         }
                     }
                 } else if is_c {
@@ -105,36 +95,62 @@ impl KeyboardViewerApp {
                         Ok(config) => {
                             // Update the keyboard state with new layout
                             self.state = KeyboardState::new(config.to_keyboard_layout());
-                            self.file_status = format!("✅ Loaded C keymap: {} layers", config.layers.len());
-                            println!("✅ Successfully loaded C keymap from: {}", self.file_path);
+                            println!("✅ Successfully loaded C keymap from: {}", path);
+                            true
                         }
                         Err(e) => {
-                            self.file_status = format!("❌ C parse error: {}", e);
                             eprintln!("❌ Failed to parse C keymap: {}", e);
+                            false
                         }
                     }
                 } else {
-                    self.file_status = "❌ Unsupported file type. Use .json, .c, or .h files.".to_string();
                     eprintln!("❌ Unsupported file type. Please use .json, .c, or .h files.");
+                    false
+                };
+                
+                if result {
+                    // Save the keymap file
+                    if let Err(e) = save_keymap_file(path) {
+                        eprintln!("⚠️ Failed to save keymap file: {}", e);
+                    }
+                    self.keyboard_loaded = true;
                 }
+                
+                result
             }
             Err(e) => {
-                self.file_status = format!("❌ File read error: {}", e);
-                eprintln!("❌ Failed to read file '{}': {}", self.file_path, e);
+                eprintln!("❌ Failed to read file '{}': {}", path, e);
+                false
             }
         }
-        
-        self.file_loading = false;
+    }
+    
+    fn unload_keyboard(&mut self) {
+        if let Err(e) = clear_saved_keymap() {
+            eprintln!("⚠️ Failed to clear saved keymap: {}", e);
+        }
+        self.keyboard_loaded = false;
+        // Reset to default Planck layout
+        self.state = KeyboardState::new(crate::keyboards::planck::PlanckLayout::default());
+    }
+    
+    pub fn set_keyboard_loaded(&mut self, loaded: bool) {
+        self.keyboard_loaded = loaded;
     }
     
     fn open_file_dialog(&mut self) {
-        // For now, we'll use a simple approach
-        // In a real implementation, you might want to use rfd or similar crate
-        // For now, we'll just set a placeholder that won't cause file read errors
-        self.file_path = "".to_string();
-        
-        // TODO: Implement proper file dialog using rfd crate
-        // This would require adding rfd as a dependency and implementing async file selection
+        // Use rfd to open file dialog synchronously
+        if let Some(file) = rfd::FileDialog::new()
+            .add_filter("Keymap files", &["json", "c", "h"])
+            .add_filter("JSON files", &["json"])
+            .add_filter("C files", &["c", "h"])
+            .set_title("Select keymap file")
+            .pick_file() {
+            
+            if let Some(path_str) = file.to_str() {
+                self.load_keymap_from_path(path_str);
+            }
+        }
     }
 }
 
@@ -160,110 +176,86 @@ impl eframe::App for KeyboardViewerApp {
 		let layer_name = self.state.keyboard.layer_names.get(layer_idx).cloned().unwrap_or_else(|| format!("Layer {}", layer_idx));
 
         egui::TopBottomPanel::top("top")
-            .min_height(60.0)
+            .min_height(50.0)
             .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    // Add padding to the panel
+                ui.add_space(10.0); // Top padding
+			ui.horizontal(|ui| {
+                    // Left side: Layer info
                     ui.add_space(10.0);
+                ui.label("Layer:");
+                ui.label(RichText::new(format!("{} (#{})", layer_name.clone(), layer_idx)).strong());
                     
-                    // Layer info
-                    ui.label("Layer:");
-                    ui.label(RichText::new(format!("{} (#{})", layer_name.clone(), layer_idx)).strong());
-                    
-                    ui.separator();
-                    
-                    // File input section
-                    ui.label("File:");
-                    ui.add(egui::TextEdit::singleline(&mut self.file_path)
-                        .hint_text("keymap.c or .json file path")
-                        .desired_width(200.0));
-                    
-                    if ui.add(egui::Button::new("Browse")
-                        .fill(Palette::OVERLAY)
-                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                        .rounding(egui::Rounding::same(6.0))
-                        .min_size(egui::Vec2::new(80.0, 30.0))).clicked() {
-                        self.open_file_dialog();
-                    }
-                    
-                    let load_button = egui::Button::new(if self.file_loading { "Loading..." } else { "Load" })
-                        .fill(if self.file_loading { Palette::YELLOW } else { Palette::GREEN })
-                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                        .rounding(egui::Rounding::same(6.0))
-                        .min_size(egui::Vec2::new(60.0, 30.0));
-                    
-                    let response = ui.add(load_button);
-                    if response.clicked() && !self.file_loading && !self.file_path.is_empty() {
-                        self.load_keymap_file();
-                    }
-                    
-                    // Display file status
-                    if !self.file_status.is_empty() {
-                        ui.separator();
-                        ui.label(RichText::new(&self.file_status)
-                            .color(if self.file_status.starts_with("✅") { Palette::GREEN } else { Palette::PEACH }));
-                    }
-                    
-                    ui.separator();
-                    
-                    // Control buttons
-                    let debug_btn = if self.show_debug { "Debug" } else { "Debug" };
-                    if ui.add(egui::Button::new(debug_btn)
-                        .fill(Palette::OVERLAY)
-                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                        .rounding(egui::Rounding::same(6.0))
-                        .min_size(egui::Vec2::new(60.0, 30.0))).clicked() { 
-                        self.show_debug = !self.show_debug; 
-                    }
-                    
-                    let legend_btn = if self.show_legend { "Legend" } else { "Legend" };
-                    if ui.add(egui::Button::new(legend_btn)
-                        .fill(Palette::OVERLAY)
-                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                        .rounding(egui::Rounding::same(6.0))
-                        .min_size(egui::Vec2::new(60.0, 30.0))).clicked() { 
-                        self.show_legend = !self.show_legend; 
-                    }
-                    
-                    let textarea_btn = if self.show_textarea { "Textarea" } else { "Textarea" };
-                    if ui.add(egui::Button::new(textarea_btn)
-                        .fill(Palette::OVERLAY)
-                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                        .rounding(egui::Rounding::same(6.0))
-                        .min_size(egui::Vec2::new(70.0, 30.0))).clicked() { 
-                        self.show_textarea = !self.show_textarea; 
-                    }
-                    
-                    #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
-                    {
-                        ui.separator();
-                        ui.label("Mode: Mock");
-                        if ui.add(egui::Button::new("Layer +")
+                    // Right side: Buttons
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add_space(10.0); // Right padding
+                
+				#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+				{
+                            if ui.add(egui::Button::new("Layer -")
+                                .fill(Palette::OVERLAY)
+                                .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                .rounding(egui::Rounding::same(6.0))
+                                .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
+						let new_layer = if self.state.active_layer == 0 {
+							self.state.keyboard.layer_names.len() as u8 - 1
+						} else {
+							self.state.active_layer - 1
+						};
+						self.state.set_layer(new_layer);
+					}
+                            if ui.add(egui::Button::new("Layer +")
+                                .fill(Palette::OVERLAY)
+                                .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                .rounding(egui::Rounding::same(6.0))
+                                .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
+                                let new_layer = (self.state.active_layer + 1) % self.state.keyboard.layer_names.len() as u8;
+                                self.state.set_layer(new_layer);
+                            }
+                            ui.label("Mode: Mock");
+                            ui.separator();
+                        }
+                        
+                        let textarea_btn = if self.show_textarea { "Textarea" } else { "Textarea" };
+                        if ui.add(egui::Button::new(textarea_btn)
                             .fill(Palette::OVERLAY)
                             .stroke(egui::Stroke::new(1.0, Palette::TEXT))
                             .rounding(egui::Rounding::same(6.0))
-                            .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
-                            let new_layer = (self.state.active_layer + 1) % self.state.keyboard.layer_names.len() as u8;
-                            self.state.set_layer(new_layer);
+                            .min_size(egui::Vec2::new(70.0, 30.0))).clicked() { 
+                            self.show_textarea = !self.show_textarea; 
                         }
-                        if ui.add(egui::Button::new("Layer -")
+                        
+                        let legend_btn = if self.show_legend { "Legend" } else { "Legend" };
+                        if ui.add(egui::Button::new(legend_btn)
                             .fill(Palette::OVERLAY)
                             .stroke(egui::Stroke::new(1.0, Palette::TEXT))
                             .rounding(egui::Rounding::same(6.0))
-                            .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
-                            let new_layer = if self.state.active_layer == 0 {
-                                self.state.keyboard.layer_names.len() as u8 - 1
-                            } else {
-                                self.state.active_layer - 1
-                            };
-                            self.state.set_layer(new_layer);
+                            .min_size(egui::Vec2::new(60.0, 30.0))).clicked() { 
+                            self.show_legend = !self.show_legend; 
                         }
-                    }
-                    
-                    // Add padding to the right
-                    ui.add_space(10.0);
-                });
-            });
+                        
+                        let debug_btn = if self.show_debug { "Debug" } else { "Debug" };
+                        if ui.add(egui::Button::new(debug_btn)
+                            .fill(Palette::OVERLAY)
+                            .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                            .rounding(egui::Rounding::same(6.0))
+                            .min_size(egui::Vec2::new(60.0, 30.0))).clicked() { 
+                            self.show_debug = !self.show_debug; 
+                        }
+                        
+                        // Unload button (only show when keyboard is loaded)
+                        if self.keyboard_loaded {
+                            ui.separator();
+                            if ui.add(egui::Button::new("Unload")
+                                .fill(Palette::OVERLAY)
+                                .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                .rounding(egui::Rounding::same(6.0))
+                                .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
+                                self.unload_keyboard();
+                            }
+                        }
+                    });
+			});
+		});
 
         if self.show_debug {
             egui::SidePanel::right("debug").resizable(true).show(ctx, |ui| {
@@ -282,6 +274,65 @@ impl eframe::App for KeyboardViewerApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            // Handle drag and drop
+            if !self.keyboard_loaded {
+                // Show drag and drop zone
+                ui.vertical_centered(|ui| {
+                    ui.add_space(50.0);
+                    
+                    let available_size = ui.available_size();
+                    let drop_zone_size = egui::Vec2::new(available_size.x * 0.8, available_size.y * 0.6);
+                    
+                    let (rect, response) = ui.allocate_exact_size(drop_zone_size, egui::Sense::click());
+                    
+                    // Draw drop zone background
+                    let bg_color = if response.hovered() {
+                        Palette::OVERLAY
+                    } else {
+                        Palette::_SURFACE
+                    };
+                    
+                    ui.painter().rect_filled(rect, 10.0, bg_color);
+                    ui.painter().rect_stroke(rect, 10.0, egui::Stroke::new(2.0, Palette::TEXT));
+                    
+                    // Draw text
+                    let text = "Drop your keymap file here\nor click to browse\n(.json, keymap.c, keymap.h)";
+                    let text_color = if response.hovered() {
+                        Palette::GREEN
+                    } else {
+                        Palette::TEXT
+                    };
+                    
+                    let text_galley = ui.painter().layout(
+                        text.to_string(),
+                        egui::FontId::proportional(24.0),
+                        text_color,
+                        rect.width() - 40.0
+                    );
+                    
+                    let text_pos = egui::pos2(
+                        rect.center().x - text_galley.size().x / 2.0,
+                        rect.center().y - text_galley.size().y / 2.0
+                    );
+                    
+                    ui.painter().galley(text_pos, text_galley, text_color);
+                    
+                    // Handle dropped files
+                    if let Some(dropped_files) = ui.input(|i| i.raw.dropped_files.first().cloned()) {
+                        if let Some(path) = &dropped_files.path {
+                            if let Some(path_str) = path.to_str() {
+                                self.load_keymap_from_path(path_str);
+                            }
+                        }
+                    }
+                    
+                    // Handle click to browse
+                    if response.clicked() {
+                        self.open_file_dialog();
+                    }
+                });
+            } else {
+                // Show keyboard
             // Ajouter plus d'espace autour du clavier
             ui.add_space(20.0);
             
@@ -420,9 +471,10 @@ impl eframe::App for KeyboardViewerApp {
                 
                 ui.add_space(20.0);
             });
+            }
             
             // Legend and text input under the keyboard (outside the centered container)
-            if self.show_legend || self.show_textarea {
+            if self.keyboard_loaded && (self.show_legend || self.show_textarea) {
                 ui.add_space(20.0);
                 ui.horizontal(|ui| {
                     // Legend on the left (if enabled)

@@ -1,4 +1,5 @@
 use qmk_viewer::config::KeymapConfig;
+use qmk_viewer::config_persistence::get_saved_keymap_path;
 use qmk_viewer::hid::{HidSource, MockHidSource, Report};
 #[cfg(feature = "rawhid")]
 use qmk_viewer::hid::RawHidSource;
@@ -46,9 +47,21 @@ fn main() {
 	});
 
 	let mut keyboard = PlanckLayout::default();
+	let mut keyboard_loaded = false;
+	
+	// Try to load from command line argument first
 	if let Some(path) = maybe_json {
 		if let Ok(cfg) = KeymapConfig::load_from_path(&path) {
 			keyboard = cfg.to_keyboard_layout();
+			keyboard_loaded = true;
+		}
+	} else {
+		// Try to load from saved keymap
+		if let Ok(Some(saved_path)) = get_saved_keymap_path() {
+			if let Ok(cfg) = KeymapConfig::load_from_path(&saved_path) {
+				keyboard = cfg.to_keyboard_layout();
+				keyboard_loaded = true;
+			}
 		}
 	}
 
@@ -72,9 +85,13 @@ fn main() {
 		..Default::default()
 	};
 	
-	let _ = eframe::run_native(
+	let _ = 	eframe::run_native(
 		"QMK Keyboard Viewer",
 		native_options,
-		Box::new(move |cc| Ok(Box::new(KeyboardViewerApp::new(cc, layout_state.clone(), rx)))),
+		Box::new(move |cc| {
+			let mut app = KeyboardViewerApp::new(cc, layout_state.clone(), rx);
+			app.set_keyboard_loaded(keyboard_loaded);
+			Ok(Box::new(app))
+		}),
 	);
 }
