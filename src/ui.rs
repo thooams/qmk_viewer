@@ -349,7 +349,7 @@ impl eframe::App for KeyboardViewerApp {
                         let key_size = Vec2::new(56.0, 56.0);
                         let spacing_y = 8.0;
                         let mut font_id = ui.style().text_styles[&egui::TextStyle::Body].clone();
-                        font_id.size *= 1.15;
+                        font_id.size *= 1.4;
 
             // Track press start times for color transition (MT keys after 2s)
             let total_keys = rows * cols;

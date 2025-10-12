@@ -1,5 +1,5 @@
 //! QMK keycode mapping and translation utilities
-//! 
+//!
 //! This module provides comprehensive mapping of QMK keycodes to human-readable
 //! labels and symbols, based on the official QMK documentation.
 
@@ -8,27 +8,27 @@ pub fn translate_token(tok: &str) -> String {
     // Map special names to glyphs/characters
     let t = tok.trim();
     if t == "TRNS" || t == "NO" || t == "_______" || t == "KC_TRNS" || t == "KC_NO" { return String::new(); }
-    
+
     // French accents and specials (KF_* keycodes from the keymap)
     if let Some(result) = translate_french_accents(t) {
         return sanitize_glyphs(&result);
     }
-    
+
     // Brackets / punctuation tokens
     if let Some(result) = translate_punctuation(t) {
         return sanitize_glyphs(&result);
     }
-    
+
     // Navigation / control glyphs
     if let Some(result) = translate_navigation(t) {
         return sanitize_glyphs(&result);
     }
-    
+
     // Modifiers / locks
     if let Some(result) = translate_modifiers(t) {
         return sanitize_glyphs(&result);
     }
-    
+
     // Basic letter keycodes (KC_A, KC_B, etc.)
     if t.starts_with("KC_") && t.len() == 4 {
         let letter = &t[3..4];
@@ -36,22 +36,22 @@ pub fn translate_token(tok: &str) -> String {
             return letter.to_lowercase();
         }
     }
-    
+
     // Other KC_ keycodes
     if let Some(result) = translate_kc_keycodes(t) {
         return sanitize_glyphs(&result);
     }
-    
+
     // Also handle single letter tokens (fallback)
     if t.len() == 1 && t.chars().next().unwrap().is_ascii_alphabetic() {
         return t.to_lowercase();
     }
-    
+
     // Common icons
     if let Some(result) = translate_icons(t) {
         return sanitize_glyphs(&result);
     }
-    
+
     sanitize_glyphs(t)
 }
 
@@ -87,13 +87,13 @@ fn translate_french_accents(t: &str) -> Option<String> {
         "KF_PSMS" => Some("±".to_string()),
         "KF_CROS" => Some("×".to_string()),
         "KF_QUOT" => Some("'".to_string()),
-        "KF_SLCT" => Some("⌘A".to_string()),
-        "KF_CUT" => Some("⌘X".to_string()),
-        "KF_COPY" => Some("⌘C".to_string()),
-        "KF_PSTE" => Some("⌘V".to_string()),
-        "KF_SAVE" => Some("⌘S".to_string()),
-        "KF_UNDO" => Some("⌘Z".to_string()),
-        "KF_REDO" => Some("⌘⇧Z".to_string()),
+        "KF_SLCT" => Some("SelAll".to_string()),
+        "KF_CUT" => Some("Cut".to_string()),
+        "KF_COPY" => Some("Copy".to_string()),
+        "KF_PSTE" => Some("Paste".to_string()),
+        "KF_SAVE" => Some("Save".to_string()),
+        "KF_UNDO" => Some("Undo".to_string()),
+        "KF_REDO" => Some("Redo".to_string()),
         // Mappings for keycodes without KF_ prefix (as they appear in the UI)
         "OCRC" => Some("ô".to_string()),
         "ICRC" => Some("î".to_string()),
@@ -221,7 +221,7 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         "KC_8" => Some("8".to_string()),
         "KC_9" => Some("9".to_string()),
         "KC_0" => Some("0".to_string()),
-        
+
         // Special keys
         "KC_SPC" | "KC_SPACE" => Some("␣".to_string()),
         "KC_ENT" | "KC_ENTER" => Some("↵".to_string()),
@@ -229,7 +229,7 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         "KC_TAB" => Some("⇥".to_string()),
         "KC_BSPC" => Some("⌫".to_string()),
         "KC_DEL" => Some("⌦".to_string()),
-        
+
         // Navigation
         "KC_LEFT" => Some("←".to_string()),
         "KC_RGHT" | "KC_RIGHT" => Some("→".to_string()),
@@ -239,14 +239,14 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         "KC_END" => Some("⇲".to_string()),
         "KC_PGUP" | "KC_PG_U" => Some("⇞".to_string()),
         "KC_PGDN" | "KC_PG_D" => Some("⇟".to_string()),
-        
+
         // Modifiers
         "KC_LSFT" | "KC_RSFT" => Some("⇧".to_string()),
         "KC_LCTL" | "KC_RCTL" => Some("⌃".to_string()),
         "KC_LALT" | "KC_RALT" => Some("⌥".to_string()),
         "KC_LGUI" | "KC_RGUI" => Some("⌘".to_string()),
         "KC_CAPS" | "KC_CAPSLOCK" => Some("⇪".to_string()),
-        
+
         // Punctuation
         "KC_LPRN" => Some("(".to_string()),
         "KC_RPRN" => Some(")".to_string()),
@@ -279,7 +279,7 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         "KC_PLUS" => Some("+".to_string()),
         "KC_EXLM" => Some("!".to_string()),
         "KC_CIRC" => Some("^".to_string()),
-        
+
         // Function keys
         "KC_F1" => Some("F1".to_string()),
         "KC_F2" => Some("F2".to_string()),
@@ -305,7 +305,7 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         "KC_F22" => Some("F22".to_string()),
         "KC_F23" => Some("F23".to_string()),
         "KC_F24" => Some("F24".to_string()),
-        
+
         // System keys
         "KC_PSCR" => Some("PrtSc".to_string()),
         "KC_APP" => Some("Menu".to_string()),
