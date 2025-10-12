@@ -15,9 +15,9 @@ echo "📂 Working directory: $(pwd)"
 rm -rf dist/linux
 mkdir -p dist/linux
 
-# Build the application
-echo "Building Rust application..."
-cargo build --release
+# Build the application with rawhid feature
+echo "🦀 Building Rust application with rawhid feature..."
+cargo build --release --features rawhid
 
 # Create AppDir structure
 mkdir -p dist/linux/QMK_Keyboard_Viewer.AppDir/{usr/bin,usr/share/applications,usr/share/icons/hicolor/256x256/apps}

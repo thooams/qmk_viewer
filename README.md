@@ -22,13 +22,14 @@ https://github.com/user-attachments/assets/screen.mov
 ### Building
 
 ```bash
-# Build for current platform
+# Build for current platform (with rawhid feature enabled by default)
 ./scripts/build-all.sh
 
 # Or build specifically:
-./scripts/build-macos.sh             # macOS
-./scripts/build-linux.sh             # Linux
-./scripts/build-windows.ps1          # Windows (PowerShell)
+./scripts/build-macos.sh             # macOS (with rawhid, production)
+./scripts/build-macos-dev.sh         # macOS (with rawhid, development - faster)
+./scripts/build-linux.sh             # Linux (with rawhid)
+./scripts/build-windows.ps1          # Windows (PowerShell, with rawhid)
 ```
 
 ### Running
@@ -76,6 +77,8 @@ cargo run --features qmk_console
 # With both features enabled
 cargo run --features rawhid,qmk_console
 ```
+
+**Note**: The build scripts (`build-macos.sh`, `build-linux.sh`, `build-windows.ps1`) automatically enable the `rawhid` feature by default for production builds.
 
 ### Arguments
 
@@ -280,7 +283,8 @@ src/
 
 scripts/
 ├── build-all.sh         # Build for all platforms
-├── build-macos.sh       # macOS build with icons
+├── build-macos.sh       # macOS build with icons (production)
+├── build-macos-dev.sh   # macOS build with icons (development - faster)
 ├── build-linux.sh       # Linux build
 ├── build-windows.bat    # Windows build (batch)
 ├── build-windows.ps1    # Windows build (PowerShell)

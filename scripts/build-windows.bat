@@ -17,9 +17,9 @@ echo Creating Windows icon...
 REM Note: This requires ImageMagick or similar tool
 REM For now, we'll create a simple batch that can be extended
 
-REM Build the application
-echo Building Rust application...
-cargo build --release
+REM Build the application with rawhid feature
+echo 🦀 Building Rust application with rawhid feature...
+cargo build --release --features rawhid
 
 REM Copy executable to dist folder
 copy target\release\qmk_viewer.exe dist\windows\QMK_Keyboard_Viewer.exe

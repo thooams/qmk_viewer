@@ -12,9 +12,15 @@ This document explains how to build QMK Keyboard Viewer for different platforms.
 
 ### macOS
 ```bash
+# Production build (optimized, larger file)
 ./scripts/build-macos.sh
+
+# Development build (faster compilation, debug symbols)
+./scripts/build-macos-dev.sh
 ```
-Creates a `.app` bundle with proper icon support and fixes common macOS issues.
+Creates a `.app` bundle with proper icon support and fixes common macOS issues. **Automatically enables the `rawhid` feature for production builds.**
+
+**Note**: The first production build may take several minutes as it compiles all dependencies. Subsequent builds will be faster.
 
 **Requirements:**
 - macOS with `sips` and `iconutil` (built-in)
@@ -29,7 +35,7 @@ If you get "damaged or incomplete" error:
 ```bash
 ./scripts/build-linux.sh
 ```
-Creates an AppDir structure that can be converted to AppImage.
+Creates an AppDir structure that can be converted to AppImage. **Automatically enables the `rawhid` feature for production builds.**
 
 **Requirements:**
 - Linux with standard build tools
@@ -43,7 +49,7 @@ pwsh -File scripts/build-windows.ps1 -WithIcon
 # Or Batch
 scripts/build-windows.bat
 ```
-Creates a Windows executable.
+Creates a Windows executable. **Automatically enables the `rawhid` feature for production builds.**
 
 **Requirements:**
 - Windows with PowerShell (for icon support)

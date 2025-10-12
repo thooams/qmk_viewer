@@ -17,9 +17,9 @@ if (Test-Path "dist\windows") {
 }
 New-Item -ItemType Directory -Path "dist\windows" -Force | Out-Null
 
-# Build the application
-Write-Host "Building Rust application..." -ForegroundColor Yellow
-cargo build --release
+# Build the application with rawhid feature
+Write-Host "🦀 Building Rust application with rawhid feature..." -ForegroundColor Yellow
+cargo build --release --features rawhid
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red

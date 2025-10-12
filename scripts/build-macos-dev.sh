@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Unified macOS build script
+# Quick macOS build script for development (debug mode)
 set -e
 
 # Change to the project root directory
@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-echo "🍎 Building QMK Keyboard Viewer for macOS..."
+echo "🍎 Building QMK Keyboard Viewer for macOS (Development)..."
 echo "📂 Working directory: $(pwd)"
 
 # Clean previous builds
@@ -88,20 +88,20 @@ iconutil -c icns dist/macos/qmk-viewer.iconset -o dist/macos/qmk-viewer.icns
 echo "📋 Copying icon to app bundle..."
 cp dist/macos/qmk-viewer.icns "dist/macos/QMK Keyboard Viewer.app/Contents/Resources/"
 
-# Build the Rust application with rawhid feature
-echo "🦀 Building Rust application with rawhid feature..."
-echo "⏳ This may take several minutes for the first build..."
-cargo build --release --features rawhid --verbose
+# Build the Rust application with rawhid feature (debug mode for speed)
+echo "🦀 Building Rust application with rawhid feature (debug mode)..."
+echo "⚡ Using debug build for faster compilation..."
+cargo build --features rawhid
 
 # Check if build was successful
-if [ ! -f "target/release/qmk_viewer" ]; then
+if [ ! -f "target/debug/qmk_viewer" ]; then
     echo "❌ Error: Rust build failed - executable not found"
     exit 1
 fi
 
 # Copy executable to bundle
 echo "📦 Copying executable to app bundle..."
-cp target/release/qmk_viewer "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/"
+cp target/debug/qmk_viewer "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/"
 
 # Set proper permissions
 echo "🔐 Setting permissions..."
@@ -117,11 +117,12 @@ xattr -d com.apple.metadata:kMDItemWhereFroms "dist/macos/QMK Keyboard Viewer.ap
 echo "✅ Verifying app bundle..."
 if [ -f "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer" ] && [ -f "dist/macos/QMK Keyboard Viewer.app/Contents/Resources/qmk-viewer.icns" ]; then
     echo ""
-    echo "🎉 macOS bundle created successfully!"
+    echo "🎉 macOS bundle created successfully! (Development version)"
     echo "📍 Location: dist/macos/QMK Keyboard Viewer.app"
     echo "🎯 You can now double-click the app to run it."
     echo ""
     echo "📊 Bundle size: $(du -sh 'dist/macos/QMK Keyboard Viewer.app' | cut -f1)"
+    echo "⚡ Note: This is a debug build - use build-macos.sh for production"
     echo ""
     echo "💡 If you get a security warning:"
     echo "   1. Right-click the app and select 'Open'"
