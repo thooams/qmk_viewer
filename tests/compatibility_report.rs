@@ -28,6 +28,12 @@ impl CompatibilityStats {
             error_breakdown: HashMap::new(),
         }
     }
+}
+
+impl Default for CompatibilityStats {
+    fn default() -> Self {
+        Self::new()
+    }
 
     pub fn parsing_success_rate(&self) -> f64 {
         if self.total_keyboards == 0 {
@@ -195,7 +201,7 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
                 error_type, count, percentage
             ));
         }
-        report.push_str("\n");
+        report.push('\n');
     }
 
     // Successful Keyboards
@@ -225,7 +231,7 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
                 successful_keyboards.len() - 50
             ));
         } else {
-            report.push_str("\n");
+            report.push('\n');
         }
     }
 
@@ -250,7 +256,7 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
                 failed_keyboards.len() - 20
             ));
         } else {
-            report.push_str("\n");
+            report.push('\n');
         }
     }
 
@@ -273,7 +279,7 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
                     result.render_time_ms
                 ));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
 
         if !ui_failed_keyboards.is_empty() {
@@ -288,7 +294,7 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
                     result.keyboard_name, error, result.render_time_ms
                 ));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
     }
 

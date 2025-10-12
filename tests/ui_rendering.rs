@@ -8,6 +8,7 @@ use std::path::Path;
 struct UIRenderingResult {
     keyboard_name: String,
     layout_creation_success: bool,
+    #[allow(dead_code)]
     dimensions_detected: bool,
     rows: Option<usize>,
     cols: Option<usize>,
@@ -180,7 +181,7 @@ fn detect_keyboard_dimensions(keys: &[String]) -> Result<(usize, usize), String>
     // If no exact match, try to find a reasonable approximation
     // Look for factors of the key count
     for rows in 1..=key_count {
-        if key_count % rows == 0 {
+        if key_count.is_multiple_of(rows) {
             let cols = key_count / rows;
             if rows <= 10 && cols <= 25 {
                 // Reasonable keyboard dimensions
@@ -199,8 +200,7 @@ fn test_keycode_translation(keys: &[String]) -> Result<(), String> {
     // Test translation of a sample of keys to ensure no panics
     let sample_size = std::cmp::min(10, keys.len());
 
-    for i in 0..sample_size {
-        let key = &keys[i];
+    for key in keys.iter().take(sample_size) {
         // This should not panic
         let _translated = keycodes::translate_token(key);
     }
@@ -292,7 +292,7 @@ fn generate_ui_report(results: &[UIRenderingResult]) -> String {
                 result.render_time_ms
             ));
         }
-        report.push_str("\n");
+        report.push('\n');
     }
 
     // Failed keyboards
@@ -312,7 +312,7 @@ fn generate_ui_report(results: &[UIRenderingResult]) -> String {
                 result.keyboard_name, error, result.render_time_ms
             ));
         }
-        report.push_str("\n");
+        report.push('\n');
     }
 
     report

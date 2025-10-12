@@ -157,7 +157,7 @@ fn generate_compatibility_report(results: &[CompatibilityResult]) -> String {
                 result.parse_time_ms
             ));
         }
-        report.push_str("\n");
+        report.push('\n');
     }
 
     // Failed keyboards
@@ -174,7 +174,7 @@ fn generate_compatibility_report(results: &[CompatibilityResult]) -> String {
                 result.keyboard_name, error, result.parse_time_ms
             ));
         }
-        report.push_str("\n");
+        report.push('\n');
     }
 
     // Error analysis
@@ -197,7 +197,7 @@ fn generate_compatibility_report(results: &[CompatibilityResult]) -> String {
         for (error_type, count) in error_counts {
             report.push_str(&format!("- **{}**: {} keyboards\n", error_type, count));
         }
-        report.push_str("\n");
+        report.push('\n');
     }
 
     report
