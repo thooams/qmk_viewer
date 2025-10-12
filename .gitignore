@@ -32,3 +32,55 @@ Cargo.lock
 *.hex
 *.bin
 *.elf
+
+# Build distributions
+/dist/
+dist/
+
+# macOS build artifacts
+*.icns
+*.iconset/
+*.app/
+
+# Windows build artifacts
+*.ico
+*.exe
+
+# Linux build artifacts
+*.AppImage
+*.AppDir/
+
+# Temporary icon files
+src/assets/images/qmk-viewer-*.png
+# But keep the directory structure
+!src/assets/images/.gitkeep
+
+# IDE specific
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+*.code-workspace
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Test files
+test_*.json
+*.test.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Documentation build
+docs/_build/
+site/

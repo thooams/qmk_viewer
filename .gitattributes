@@ -1,0 +1,45 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Rust source files
+*.rs text
+Cargo.toml text
+Cargo.lock text
+
+# Shell scripts
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Documentation
+*.md text
+*.txt text
+
+# JSON files
+*.json text
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.hex binary
+*.bin binary
+*.elf binary
+
+# Archives
+*.zip binary
+*.tar.gz binary
+*.tar.bz2 binary
+*.7z binary
+
+# IDE files
+*.code-workspace text
+.vscode/* text
+.idea/* text

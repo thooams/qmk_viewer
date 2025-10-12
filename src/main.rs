@@ -8,6 +8,8 @@ use qmk_viewer::keyboard::KeyboardState;
 use qmk_viewer::keyboards::planck::PlanckLayout;
 use qmk_viewer::ui::KeyboardViewerApp;
 
+use egui::{IconData, ViewportBuilder};
+
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
@@ -52,7 +54,24 @@ fn main() {
 
 	let layout_state = KeyboardState::new(keyboard);
 
-	let native_options = eframe::NativeOptions::default();
+	// Load the application icon
+	let icon_data = include_bytes!("assets/images/qmk-viewer.png");
+	let icon = image::load_from_memory(icon_data)
+		.expect("Failed to load icon")
+		.to_rgba8();
+	let (icon_width, icon_height) = icon.dimensions();
+	let icon_rgba = icon.into_raw();
+
+	let native_options = eframe::NativeOptions {
+		viewport: ViewportBuilder::default()
+			.with_icon(IconData {
+				rgba: icon_rgba,
+				width: icon_width,
+				height: icon_height,
+			}),
+		..Default::default()
+	};
+	
 	let _ = eframe::run_native(
 		"QMK Keyboard Viewer",
 		native_options,
