@@ -7,21 +7,19 @@ impl PlanckLayout {
     /// Default Planck keyboard dimensions (4 rows, 12 columns)
     pub const ROWS: usize = 4;
     pub const COLS: usize = 12;
-    
+
     /// Default Planck layer names
-    pub const DEFAULT_LAYER_NAMES: &'static [&'static str] = &[
-        "Base",
-        "Lower", 
-        "Raise",
-        "Adjust",
-    ];
+    pub const DEFAULT_LAYER_NAMES: &'static [&'static str] = &["Base", "Lower", "Raise", "Adjust"];
 
     /// Create a default Planck keyboard layout
-    pub fn default() -> KeyboardLayout {
+    pub fn planck_default() -> KeyboardLayout {
         KeyboardLayout::new(
             Self::ROWS,
             Self::COLS,
-            Self::DEFAULT_LAYER_NAMES.iter().map(|s| s.to_string()).collect(),
+            Self::DEFAULT_LAYER_NAMES
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         )
     }
 
@@ -37,7 +35,7 @@ mod tests {
 
     #[test]
     fn test_planck_default() {
-        let layout = PlanckLayout::default();
+        let layout = PlanckLayout::planck_default();
         assert_eq!(layout.rows, 4);
         assert_eq!(layout.cols, 12);
         assert_eq!(layout.layer_names, vec!["Base", "Lower", "Raise", "Adjust"]);

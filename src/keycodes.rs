@@ -6,28 +6,30 @@
 /// Translate a QMK keycode token to a human-readable label
 pub fn translate_token(tok: &str) -> String {
     let t = tok.trim();
-    if t == "TRNS" || t == "NO" || t == "_______" || t == "KC_TRNS" || t == "KC_NO" { return String::new(); }
-    
+    if t == "TRNS" || t == "NO" || t == "_______" || t == "KC_TRNS" || t == "KC_NO" {
+        return String::new();
+    }
+
     // French accents and specials (KF_* keycodes from the keymap)
     if let Some(result) = translate_french_accents(t) {
         return result;
     }
-    
+
     // Brackets / punctuation tokens
     if let Some(result) = translate_punctuation(t) {
         return result;
     }
-    
+
     // Navigation / control
     if let Some(result) = translate_navigation(t) {
         return result;
     }
-    
+
     // Modifiers / locks
     if let Some(result) = translate_modifiers(t) {
         return result;
     }
-    
+
     // Basic letter keycodes (KC_A, KC_B, etc.)
     if t.starts_with("KC_") && t.len() == 4 {
         let letter = &t[3..4];
@@ -35,22 +37,22 @@ pub fn translate_token(tok: &str) -> String {
             return letter.to_lowercase();
         }
     }
-    
+
     // Other KC_ keycodes
     if let Some(result) = translate_kc_keycodes(t) {
         return result;
     }
-    
+
     // Also handle single letter tokens (fallback)
     if t.len() == 1 && t.chars().next().unwrap().is_ascii_alphabetic() {
         return t.to_lowercase();
     }
-    
+
     // Common icons
     if let Some(result) = translate_icons(t) {
         return result;
     }
-    
+
     t.to_string()
 }
 
@@ -368,7 +370,6 @@ pub fn layer_display_name(token: &str) -> String {
     };
     friendly.to_string()
 }
-
 
 #[cfg(test)]
 mod tests {

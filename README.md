@@ -1,5 +1,9 @@
 # QMK Keyboard Viewer
 
+[![CI](https://github.com/thomas/qmk_viewer/workflows/CI/badge.svg)](https://github.com/thomas/qmk_viewer/actions)
+[![Release](https://github.com/thomas/qmk_viewer/workflows/Release/badge.svg)](https://github.com/thomas/qmk_viewer/actions)
+[![Version](https://img.shields.io/github/v/release/thomas/qmk_viewer)](https://github.com/thomas/qmk_viewer/releases)
+
 A cross-platform application for viewing and visualizing QMK keyboard layouts with support for any QMK-compatible keyboard.
 
 ## Demo

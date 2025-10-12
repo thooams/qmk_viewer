@@ -28,5 +28,3 @@ fn parse_two_layers() {
     // The raw layer should contain the full MT wrapper, not the inner keycode
     assert!(cfg.layers[1].iter().any(|s| s == "MT(MOD_LALT, KC_TAB)"));
 }
-
-

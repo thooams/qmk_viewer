@@ -1,7 +1,7 @@
+use chrono::Utc;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::collections::HashMap;
-use chrono::Utc;
 
 #[derive(Debug, Clone)]
 pub struct CompatibilityStats {
@@ -93,7 +93,10 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
     // Read UI rendering results
     if Path::new("tests/ui_rendering_report.md").exists() {
         let ui_results = parse_ui_rendering_report("tests/ui_rendering_report.md")?;
-        stats.successful_ui_rendering = ui_results.iter().filter(|r| r.layout_creation_success).count();
+        stats.successful_ui_rendering = ui_results
+            .iter()
+            .filter(|r| r.layout_creation_success)
+            .count();
         stats.failed_ui_rendering = ui_results.len() - stats.successful_ui_rendering;
         stats.total_render_time_ms = ui_results.iter().map(|r| r.render_time_ms).sum();
 
@@ -108,37 +111,72 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
 
     // Generate comprehensive report
     let mut report = String::new();
-    
+
     // Header
     report.push_str("# QMK Keyboard Viewer - Comprehensive Compatibility Report\n\n");
-    report.push_str(&format!("Generated on: {}\n\n", Utc::now().format("%Y-%m-%d %H:%M:%S UTC")));
-    
+    report.push_str(&format!(
+        "Generated on: {}\n\n",
+        Utc::now().format("%Y-%m-%d %H:%M:%S UTC")
+    ));
+
     // Executive Summary
     report.push_str("## Executive Summary\n\n");
     report.push_str(&format!(
         "This report provides a comprehensive analysis of QMK Keyboard Viewer's compatibility with {} keyboards from the QMK firmware repository.\n\n",
         stats.total_keyboards
     ));
-    
+
     report.push_str("### Key Metrics\n\n");
-    report.push_str(&format!("- **Parsing Success Rate**: {:.1}% ({} of {} keyboards)\n", 
-        stats.parsing_success_rate(), stats.successful_parsing, stats.total_keyboards));
-    report.push_str(&format!("- **UI Rendering Success Rate**: {:.1}% ({} of {} keyboards)\n", 
-        stats.ui_rendering_success_rate(), stats.successful_ui_rendering, stats.total_keyboards));
-    report.push_str(&format!("- **Average Parse Time**: {:.1}ms\n", stats.avg_parse_time_ms()));
-    report.push_str(&format!("- **Average Render Time**: {:.1}ms\n\n", stats.avg_render_time_ms()));
+    report.push_str(&format!(
+        "- **Parsing Success Rate**: {:.1}% ({} of {} keyboards)\n",
+        stats.parsing_success_rate(),
+        stats.successful_parsing,
+        stats.total_keyboards
+    ));
+    report.push_str(&format!(
+        "- **UI Rendering Success Rate**: {:.1}% ({} of {} keyboards)\n",
+        stats.ui_rendering_success_rate(),
+        stats.successful_ui_rendering,
+        stats.total_keyboards
+    ));
+    report.push_str(&format!(
+        "- **Average Parse Time**: {:.1}ms\n",
+        stats.avg_parse_time_ms()
+    ));
+    report.push_str(&format!(
+        "- **Average Render Time**: {:.1}ms\n\n",
+        stats.avg_render_time_ms()
+    ));
 
     // Performance Analysis
     report.push_str("## Performance Analysis\n\n");
     report.push_str("### Parse Performance\n\n");
     report.push_str("| Metric | Value |\n");
     report.push_str("|--------|-------|\n");
-    report.push_str(&format!("| Total Parse Time | {}ms |\n", stats.total_parse_time_ms));
-    report.push_str(&format!("| Average Parse Time | {:.1}ms |\n", stats.avg_parse_time_ms()));
-    report.push_str(&format!("| Fastest Parse | {}ms |\n", 
-        successful_keyboards.iter().map(|r| r.parse_time_ms).min().unwrap_or(0)));
-    report.push_str(&format!("| Slowest Parse | {}ms |\n\n", 
-        successful_keyboards.iter().map(|r| r.parse_time_ms).max().unwrap_or(0)));
+    report.push_str(&format!(
+        "| Total Parse Time | {}ms |\n",
+        stats.total_parse_time_ms
+    ));
+    report.push_str(&format!(
+        "| Average Parse Time | {:.1}ms |\n",
+        stats.avg_parse_time_ms()
+    ));
+    report.push_str(&format!(
+        "| Fastest Parse | {}ms |\n",
+        successful_keyboards
+            .iter()
+            .map(|r| r.parse_time_ms)
+            .min()
+            .unwrap_or(0)
+    ));
+    report.push_str(&format!(
+        "| Slowest Parse | {}ms |\n\n",
+        successful_keyboards
+            .iter()
+            .map(|r| r.parse_time_ms)
+            .max()
+            .unwrap_or(0)
+    ));
 
     // Error Analysis
     if !stats.error_breakdown.is_empty() {
@@ -146,13 +184,16 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
         report.push_str("### Error Categories\n\n");
         report.push_str("| Error Type | Count | Percentage |\n");
         report.push_str("|------------|-------|------------|\n");
-        
+
         let mut sorted_errors: Vec<_> = stats.error_breakdown.iter().collect();
         sorted_errors.sort_by(|a, b| b.1.cmp(a.1));
-        
+
         for (error_type, count) in sorted_errors {
             let percentage = (*count as f64 / stats.failed_parsing as f64) * 100.0;
-            report.push_str(&format!("| {} | {} | {:.1}% |\n", error_type, count, percentage));
+            report.push_str(&format!(
+                "| {} | {} | {:.1}% |\n",
+                error_type, count, percentage
+            ));
         }
         report.push_str("\n");
     }
@@ -162,12 +203,13 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
         report.push_str("## Successfully Parsed Keyboards\n\n");
         report.push_str("| Keyboard | Layers | Keys/Layer | Parse Time (ms) |\n");
         report.push_str("|----------|--------|------------|-----------------|\n");
-        
+
         // Sort by parse time for better analysis
         let mut sorted_successful = successful_keyboards.clone();
         sorted_successful.sort_by(|a, b| a.parse_time_ms.cmp(&b.parse_time_ms));
-        
-        for result in sorted_successful.iter().take(50) { // Show top 50
+
+        for result in sorted_successful.iter().take(50) {
+            // Show top 50
             report.push_str(&format!(
                 "| {} | {} | {} | {} |\n",
                 result.keyboard_name,
@@ -176,9 +218,12 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
                 result.parse_time_ms
             ));
         }
-        
+
         if successful_keyboards.len() > 50 {
-            report.push_str(&format!("| ... and {} more | ... | ... | ... |\n\n", successful_keyboards.len() - 50));
+            report.push_str(&format!(
+                "| ... and {} more | ... | ... | ... |\n\n",
+                successful_keyboards.len() - 50
+            ));
         } else {
             report.push_str("\n");
         }
@@ -189,19 +234,21 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
         report.push_str("## Failed Keyboards\n\n");
         report.push_str("| Keyboard | Error | Parse Time (ms) |\n");
         report.push_str("|----------|-------|-----------------|\n");
-        
-        for result in failed_keyboards.iter().take(20) { // Show first 20 failures
+
+        for result in failed_keyboards.iter().take(20) {
+            // Show first 20 failures
             let error = result.error_message.as_deref().unwrap_or("Unknown error");
             report.push_str(&format!(
                 "| {} | {} | {} |\n",
-                result.keyboard_name,
-                error,
-                result.parse_time_ms
+                result.keyboard_name, error, result.parse_time_ms
             ));
         }
-        
+
         if failed_keyboards.len() > 20 {
-            report.push_str(&format!("| ... and {} more | ... | ... |\n\n", failed_keyboards.len() - 20));
+            report.push_str(&format!(
+                "| ... and {} more | ... | ... |\n\n",
+                failed_keyboards.len() - 20
+            ));
         } else {
             report.push_str("\n");
         }
@@ -210,12 +257,12 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
     // UI Rendering Results
     if !ui_successful_keyboards.is_empty() || !ui_failed_keyboards.is_empty() {
         report.push_str("## UI Rendering Results\n\n");
-        
+
         if !ui_successful_keyboards.is_empty() {
             report.push_str("### Successfully Rendered Keyboards\n\n");
             report.push_str("| Keyboard | Rows | Cols | Total Keys | Render Time (ms) |\n");
             report.push_str("|----------|------|------|------------|------------------|\n");
-            
+
             for result in ui_successful_keyboards.iter().take(20) {
                 report.push_str(&format!(
                     "| {} | {} | {} | {} | {} |\n",
@@ -233,14 +280,12 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
             report.push_str("### Failed UI Rendering\n\n");
             report.push_str("| Keyboard | Error | Render Time (ms) |\n");
             report.push_str("|----------|-------|------------------|\n");
-            
+
             for result in ui_failed_keyboards.iter().take(10) {
                 let error = result.error_message.as_deref().unwrap_or("Unknown error");
                 report.push_str(&format!(
                     "| {} | {} | {} |\n",
-                    result.keyboard_name,
-                    error,
-                    result.render_time_ms
+                    result.keyboard_name, error, result.render_time_ms
                 ));
             }
             report.push_str("\n");
@@ -249,21 +294,21 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
 
     // Recommendations
     report.push_str("## Recommendations\n\n");
-    
+
     if stats.parsing_success_rate() < 80.0 {
         report.push_str("### Parsing Improvements\n\n");
         report.push_str("- Consider improving the keymap parser to handle more edge cases\n");
         report.push_str("- Add support for additional QMK keycode formats\n");
         report.push_str("- Implement better error recovery mechanisms\n\n");
     }
-    
+
     if stats.ui_rendering_success_rate() < 80.0 {
         report.push_str("### UI Rendering Improvements\n\n");
         report.push_str("- Enhance keyboard dimension detection algorithms\n");
         report.push_str("- Add support for non-standard keyboard layouts\n");
         report.push_str("- Improve keycode translation robustness\n\n");
     }
-    
+
     if stats.avg_parse_time_ms() > 100.0 {
         report.push_str("### Performance Optimizations\n\n");
         report.push_str("- Consider caching parsed keymaps\n");
@@ -277,7 +322,7 @@ pub fn generate_comprehensive_report() -> Result<String, Box<dyn std::error::Err
         "QMK Keyboard Viewer demonstrates {}% compatibility with the tested QMK keyboards. ",
         stats.parsing_success_rate() as i32
     ));
-    
+
     if stats.parsing_success_rate() >= 90.0 {
         report.push_str("This is excellent compatibility and indicates the application is ready for production use with most QMK keyboards.\n\n");
     } else if stats.parsing_success_rate() >= 70.0 {
@@ -326,18 +371,20 @@ struct UIRenderingResult {
     render_time_ms: u64,
 }
 
-fn parse_compatibility_report(path: &str) -> Result<Vec<ParsingResult>, Box<dyn std::error::Error>> {
+fn parse_compatibility_report(
+    path: &str,
+) -> Result<Vec<ParsingResult>, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(path)?;
     let mut results = Vec::new();
-    
+
     // Simple parsing of the markdown report
     let lines: Vec<&str> = content.lines().collect();
     let mut in_successful_section = false;
     let mut in_failed_section = false;
-    
+
     for line in lines {
         let line = line.trim();
-        
+
         if line.contains("## Successful Keyboards") {
             in_successful_section = true;
             in_failed_section = false;
@@ -351,17 +398,17 @@ fn parse_compatibility_report(path: &str) -> Result<Vec<ParsingResult>, Box<dyn 
             in_failed_section = false;
             continue;
         }
-        
+
         if line.starts_with('|') && !line.contains("---") {
             let parts: Vec<&str> = line.split('|').map(|s| s.trim()).collect();
             if parts.len() >= 4 {
                 let keyboard_name = parts[1].to_string();
-                
+
                 if in_successful_section {
                     let layers_count = parts[2].parse().ok();
                     let keys_per_layer = parts[3].parse().ok();
                     let parse_time_ms = parts[4].parse().unwrap_or(0);
-                    
+
                     results.push(ParsingResult {
                         keyboard_name,
                         success: true,
@@ -373,7 +420,7 @@ fn parse_compatibility_report(path: &str) -> Result<Vec<ParsingResult>, Box<dyn 
                 } else if in_failed_section {
                     let error_message = Some(parts[2].to_string());
                     let parse_time_ms = parts[3].parse().unwrap_or(0);
-                    
+
                     results.push(ParsingResult {
                         keyboard_name,
                         success: false,
@@ -386,22 +433,24 @@ fn parse_compatibility_report(path: &str) -> Result<Vec<ParsingResult>, Box<dyn 
             }
         }
     }
-    
+
     Ok(results)
 }
 
-fn parse_ui_rendering_report(path: &str) -> Result<Vec<UIRenderingResult>, Box<dyn std::error::Error>> {
+fn parse_ui_rendering_report(
+    path: &str,
+) -> Result<Vec<UIRenderingResult>, Box<dyn std::error::Error>> {
     let content = fs::read_to_string(path)?;
     let mut results = Vec::new();
-    
+
     // Simple parsing of the markdown report
     let lines: Vec<&str> = content.lines().collect();
     let mut in_successful_section = false;
     let mut in_failed_section = false;
-    
+
     for line in lines {
         let line = line.trim();
-        
+
         if line.contains("## Successful UI Rendering") {
             in_successful_section = true;
             in_failed_section = false;
@@ -415,18 +464,18 @@ fn parse_ui_rendering_report(path: &str) -> Result<Vec<UIRenderingResult>, Box<d
             in_failed_section = false;
             continue;
         }
-        
+
         if line.starts_with('|') && !line.contains("---") {
             let parts: Vec<&str> = line.split('|').map(|s| s.trim()).collect();
             if parts.len() >= 4 {
                 let keyboard_name = parts[1].to_string();
-                
+
                 if in_successful_section {
                     let rows = parts[2].parse().ok();
                     let cols = parts[3].parse().ok();
                     let total_keys = parts[4].parse().ok();
                     let render_time_ms = parts[5].parse().unwrap_or(0);
-                    
+
                     results.push(UIRenderingResult {
                         keyboard_name,
                         layout_creation_success: true,
@@ -439,7 +488,7 @@ fn parse_ui_rendering_report(path: &str) -> Result<Vec<UIRenderingResult>, Box<d
                 } else if in_failed_section {
                     let error_message = Some(parts[2].to_string());
                     let render_time_ms = parts[3].parse().unwrap_or(0);
-                    
+
                     results.push(UIRenderingResult {
                         keyboard_name,
                         layout_creation_success: false,
@@ -453,21 +502,28 @@ fn parse_ui_rendering_report(path: &str) -> Result<Vec<UIRenderingResult>, Box<d
             }
         }
     }
-    
+
     Ok(results)
 }
 
 #[test]
 fn test_generate_comprehensive_report() {
     // This test will only work if the individual reports exist
-    if Path::new("tests/compatibility_report.md").exists() || Path::new("tests/ui_rendering_report.md").exists() {
+    if Path::new("tests/compatibility_report.md").exists()
+        || Path::new("tests/ui_rendering_report.md").exists()
+    {
         match generate_comprehensive_report() {
             Ok(report) => {
-                println!("Generated comprehensive report ({} characters)", report.len());
+                println!(
+                    "Generated comprehensive report ({} characters)",
+                    report.len()
+                );
                 // Save the report
                 fs::write("tests/comprehensive_compatibility_report.md", &report)
                     .expect("Failed to write comprehensive report");
-                println!("Comprehensive report saved to: tests/comprehensive_compatibility_report.md");
+                println!(
+                    "Comprehensive report saved to: tests/comprehensive_compatibility_report.md"
+                );
             }
             Err(e) => {
                 println!("Failed to generate comprehensive report: {}", e);

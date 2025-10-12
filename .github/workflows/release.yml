@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # D'abord, exécuter tous les tests
+  test:
+    name: Test on ${{ matrix.os }}
+    strategy:
+      fail-fast: true  # Arrêter dès qu'un test échoue
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets --features rawhid -- -D warnings
+      - run: cargo build --release --features rawhid
+      - run: cargo test --release
+
+  # Ensuite, créer la release (seulement si tous les tests passent)
+  create-release:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | head -1 | cut -d'"' -f2)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build des binaires (seulement si tests + release creation OK)
+  build-linux:
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Build
+        run: cargo build --release --features rawhid
+      
+      - name: Package
+        run: |
+          cd target/release
+          tar czf ../../qmk_viewer-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz qmk_viewer
+      
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: qmk_viewer-${{ needs.create-release.outputs.version }}-linux-x86_64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    needs: create-release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Build macOS app bundle
+        run: |
+          chmod +x scripts/build-macos.sh
+          ./scripts/build-macos.sh
+      
+      - name: Package
+        run: |
+          cd dist/macos
+          zip -r ../../qmk_viewer-${{ needs.create-release.outputs.version }}-macos.zip "QMK Keyboard Viewer.app"
+      
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: qmk_viewer-${{ needs.create-release.outputs.version }}-macos.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    needs: create-release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Build
+        run: cargo build --release --features rawhid
+      
+      - name: Package
+        shell: pwsh
+        run: |
+          cd target/release
+          Compress-Archive -Path qmk_viewer.exe -DestinationPath ../../qmk_viewer-${{ needs.create-release.outputs.version }}-windows-x86_64.zip
+      
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          files: qmk_viewer-${{ needs.create-release.outputs.version }}-windows-x86_64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

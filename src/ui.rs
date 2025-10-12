@@ -1,7 +1,7 @@
+use crate::config::KeymapConfig;
+use crate::config_persistence::{clear_saved_keymap, save_keymap_file};
 use crate::hid::Report;
 use crate::keyboard::KeyboardState;
-use crate::config::KeymapConfig;
-use crate::config_persistence::{save_keymap_file, clear_saved_keymap};
 use eframe::egui::{self, Color32, Context, RichText, Sense, Vec2};
 
 // Catppuccin Mocha palette (subset)
@@ -15,25 +15,29 @@ impl Palette {
     const OVERLAY: Color32 = Color32::from_rgb(0x31, 0x31, 0x41); // overlay0
     const TEXT: Color32 = Color32::from_rgb(0xc6, 0xd0, 0xf5);
 }
-use std::sync::mpsc::Receiver;
 use std::collections::HashMap;
+use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant};
 
 pub struct KeyboardViewerApp {
-	state: KeyboardState,
-	rx: Receiver<Report>,
+    state: KeyboardState,
+    rx: Receiver<Report>,
     show_debug: bool,
     show_legend: bool,
     show_textarea: bool,
     pressed_started: HashMap<usize, Instant>,
     text_input: String,
     keyboard_loaded: bool,
-	#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
-	manual_pressed: std::collections::HashSet<usize>,
+    #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+    manual_pressed: std::collections::HashSet<usize>,
 }
 
 impl KeyboardViewerApp {
-    pub fn new(cc: &eframe::CreationContext<'_>, state: KeyboardState, rx: Receiver<Report>) -> Self {
+    pub fn new(
+        cc: &eframe::CreationContext<'_>,
+        state: KeyboardState,
+        rx: Receiver<Report>,
+    ) -> Self {
         // Try to install symbol-capable fonts so glyphs render (macOS paths first)
         let mut fonts = egui::FontDefinitions::default();
         // Known macOS fonts with symbols/emoji
@@ -47,9 +51,19 @@ impl KeyboardViewerApp {
         for path in candidates.iter() {
             if let Ok(bytes) = std::fs::read(path) {
                 let key = format!("userfont:{}", path);
-                fonts.font_data.insert(key.clone(), egui::FontData::from_owned(bytes).into());
-                fonts.families.entry(egui::FontFamily::Proportional).or_default().insert(0, key.clone());
-                fonts.families.entry(egui::FontFamily::Monospace).or_default().insert(0, key);
+                fonts
+                    .font_data
+                    .insert(key.clone(), egui::FontData::from_owned(bytes).into());
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Proportional)
+                    .or_default()
+                    .insert(0, key.clone());
+                fonts
+                    .families
+                    .entry(egui::FontFamily::Monospace)
+                    .or_default()
+                    .insert(0, key);
             }
         }
         cc.egui_ctx.set_fonts(fonts);
@@ -67,14 +81,14 @@ impl KeyboardViewerApp {
             manual_pressed: std::collections::HashSet::new(),
         }
     }
-    
+
     fn load_keymap_from_path(&mut self, path: &str) -> bool {
         match std::fs::read_to_string(path) {
             Ok(content) => {
                 // Determine file type by extension
                 let is_json = path.ends_with(".json");
                 let is_c = path.ends_with(".c") || path.ends_with(".h");
-                
+
                 let result = if is_json {
                     // Try to parse as JSON
                     match serde_json::from_str::<KeymapConfig>(&content) {
@@ -107,7 +121,7 @@ impl KeyboardViewerApp {
                     eprintln!("❌ Unsupported file type. Please use .json, .c, or .h files.");
                     false
                 };
-                
+
                 if result {
                     // Save the keymap file
                     if let Err(e) = save_keymap_file(path) {
@@ -115,7 +129,7 @@ impl KeyboardViewerApp {
                     }
                     self.keyboard_loaded = true;
                 }
-                
+
                 result
             }
             Err(e) => {
@@ -124,20 +138,20 @@ impl KeyboardViewerApp {
             }
         }
     }
-    
+
     fn unload_keyboard(&mut self) {
         if let Err(e) = clear_saved_keymap() {
             eprintln!("⚠️ Failed to clear saved keymap: {}", e);
         }
         self.keyboard_loaded = false;
         // Reset to default Planck layout
-        self.state = KeyboardState::new(crate::keyboards::planck::PlanckLayout::default());
+        self.state = KeyboardState::new(crate::keyboards::planck::PlanckLayout::planck_default());
     }
-    
+
     pub fn set_keyboard_loaded(&mut self, loaded: bool) {
         self.keyboard_loaded = loaded;
     }
-    
+
     fn open_file_dialog(&mut self) {
         // Use rfd to open file dialog synchronously
         if let Some(file) = rfd::FileDialog::new()
@@ -145,8 +159,8 @@ impl KeyboardViewerApp {
             .add_filter("JSON files", &["json"])
             .add_filter("C files", &["c", "h"])
             .set_title("Select keymap file")
-            .pick_file() {
-            
+            .pick_file()
+        {
             if let Some(path_str) = file.to_str() {
                 self.load_keymap_from_path(path_str);
             }
@@ -155,122 +169,164 @@ impl KeyboardViewerApp {
 }
 
 impl eframe::App for KeyboardViewerApp {
-	fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-		// Drain any pending reports
-		while let Ok(rep) = self.rx.try_recv() {
-			self.state.set_layer(rep.active_layer);
-			self.state.set_pressed_bits(rep.pressed_bits);
-		}
+    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+        // Drain any pending reports
+        while let Ok(rep) = self.rx.try_recv() {
+            self.state.set_layer(rep.active_layer);
+            self.state.set_pressed_bits(rep.pressed_bits);
+        }
 
-		#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
-		{
-			// In mock mode, use manual pressed keys
-			let mut bits = 0u64;
-			for &idx in &self.manual_pressed {
-				bits |= 1u64 << idx;
-			}
-			self.state.set_pressed_bits(bits);
-		}
+        #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+        {
+            // In mock mode, use manual pressed keys
+            let mut bits = 0u64;
+            for &idx in &self.manual_pressed {
+                bits |= 1u64 << idx;
+            }
+            self.state.set_pressed_bits(bits);
+        }
 
-		let layer_idx = self.state.active_layer as usize;
-		let layer_name = self.state.keyboard.layer_names.get(layer_idx).cloned().unwrap_or_else(|| format!("Layer {}", layer_idx));
+        let layer_idx = self.state.active_layer as usize;
+        let layer_name = self
+            .state
+            .keyboard
+            .layer_names
+            .get(layer_idx)
+            .cloned()
+            .unwrap_or_else(|| format!("Layer {}", layer_idx));
 
         egui::TopBottomPanel::top("top")
             .min_height(50.0)
             .show(ctx, |ui| {
                 ui.add_space(10.0); // Top padding
-			ui.horizontal(|ui| {
+                ui.horizontal(|ui| {
                     // Left side: Layer info
                     ui.add_space(10.0);
-                ui.label("Layer:");
-                ui.label(RichText::new(format!("{} (#{})", layer_name.clone(), layer_idx)).strong());
-                    
+                    ui.label("Layer:");
+                    ui.label(
+                        RichText::new(format!("{} (#{})", layer_name.clone(), layer_idx)).strong(),
+                    );
+
                     // Right side: Buttons
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.add_space(10.0); // Right padding
-                
-				#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
-				{
-                            if ui.add(egui::Button::new("Layer -")
-                                .fill(Palette::OVERLAY)
-                                .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                                .rounding(egui::Rounding::same(6.0))
-                                .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
-						let new_layer = if self.state.active_layer == 0 {
-							self.state.keyboard.layer_names.len() as u8 - 1
-						} else {
-							self.state.active_layer - 1
-						};
-						self.state.set_layer(new_layer);
-					}
-                            if ui.add(egui::Button::new("Layer +")
-                                .fill(Palette::OVERLAY)
-                                .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                                .rounding(egui::Rounding::same(6.0))
-                                .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
-                                let new_layer = (self.state.active_layer + 1) % self.state.keyboard.layer_names.len() as u8;
+
+                        #[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
+                        {
+                            if ui
+                                .add(
+                                    egui::Button::new("Layer -")
+                                        .fill(Palette::OVERLAY)
+                                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                        .rounding(egui::Rounding::same(6.0))
+                                        .min_size(egui::Vec2::new(60.0, 30.0)),
+                                )
+                                .clicked()
+                            {
+                                let new_layer = if self.state.active_layer == 0 {
+                                    self.state.keyboard.layer_names.len() as u8 - 1
+                                } else {
+                                    self.state.active_layer - 1
+                                };
+                                self.state.set_layer(new_layer);
+                            }
+                            if ui
+                                .add(
+                                    egui::Button::new("Layer +")
+                                        .fill(Palette::OVERLAY)
+                                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                        .rounding(egui::Rounding::same(6.0))
+                                        .min_size(egui::Vec2::new(60.0, 30.0)),
+                                )
+                                .clicked()
+                            {
+                                let new_layer = (self.state.active_layer + 1)
+                                    % self.state.keyboard.layer_names.len() as u8;
                                 self.state.set_layer(new_layer);
                             }
                             ui.label("Mode: Mock");
                             ui.separator();
                         }
-                        
-                        let textarea_btn = if self.show_textarea { "Textarea" } else { "Textarea" };
-                        if ui.add(egui::Button::new(textarea_btn)
-                            .fill(Palette::OVERLAY)
-                            .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                            .rounding(egui::Rounding::same(6.0))
-                            .min_size(egui::Vec2::new(70.0, 30.0))).clicked() { 
-                            self.show_textarea = !self.show_textarea; 
+
+                        let textarea_btn = "Textarea";
+                        if ui
+                            .add(
+                                egui::Button::new(textarea_btn)
+                                    .fill(Palette::OVERLAY)
+                                    .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                    .rounding(egui::Rounding::same(6.0))
+                                    .min_size(egui::Vec2::new(70.0, 30.0)),
+                            )
+                            .clicked()
+                        {
+                            self.show_textarea = !self.show_textarea;
                         }
-                        
-                        let legend_btn = if self.show_legend { "Legend" } else { "Legend" };
-                        if ui.add(egui::Button::new(legend_btn)
-                            .fill(Palette::OVERLAY)
-                            .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                            .rounding(egui::Rounding::same(6.0))
-                            .min_size(egui::Vec2::new(60.0, 30.0))).clicked() { 
-                            self.show_legend = !self.show_legend; 
+
+                        let legend_btn = "Legend";
+                        if ui
+                            .add(
+                                egui::Button::new(legend_btn)
+                                    .fill(Palette::OVERLAY)
+                                    .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                    .rounding(egui::Rounding::same(6.0))
+                                    .min_size(egui::Vec2::new(60.0, 30.0)),
+                            )
+                            .clicked()
+                        {
+                            self.show_legend = !self.show_legend;
                         }
-                        
-                        let debug_btn = if self.show_debug { "Debug" } else { "Debug" };
-                        if ui.add(egui::Button::new(debug_btn)
-                            .fill(Palette::OVERLAY)
-                            .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                            .rounding(egui::Rounding::same(6.0))
-                            .min_size(egui::Vec2::new(60.0, 30.0))).clicked() { 
-                            self.show_debug = !self.show_debug; 
+
+                        let debug_btn = "Debug";
+                        if ui
+                            .add(
+                                egui::Button::new(debug_btn)
+                                    .fill(Palette::OVERLAY)
+                                    .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                    .rounding(egui::Rounding::same(6.0))
+                                    .min_size(egui::Vec2::new(60.0, 30.0)),
+                            )
+                            .clicked()
+                        {
+                            self.show_debug = !self.show_debug;
                         }
-                        
+
                         // Unload button (only show when keyboard is loaded)
                         if self.keyboard_loaded {
                             ui.separator();
-                            if ui.add(egui::Button::new("Unload")
-                                .fill(Palette::OVERLAY)
-                                .stroke(egui::Stroke::new(1.0, Palette::TEXT))
-                                .rounding(egui::Rounding::same(6.0))
-                                .min_size(egui::Vec2::new(60.0, 30.0))).clicked() {
+                            if ui
+                                .add(
+                                    egui::Button::new("Unload")
+                                        .fill(Palette::OVERLAY)
+                                        .stroke(egui::Stroke::new(1.0, Palette::TEXT))
+                                        .rounding(egui::Rounding::same(6.0))
+                                        .min_size(egui::Vec2::new(60.0, 30.0)),
+                                )
+                                .clicked()
+                            {
                                 self.unload_keyboard();
                             }
                         }
                     });
-			});
-		});
+                });
+            });
 
         if self.show_debug {
-            egui::SidePanel::right("debug").resizable(true).show(ctx, |ui| {
-                ui.add_space(10.0);
-                ui.heading("Debug");
-                ui.add_space(5.0);
-                ui.label(format!("Active layer index: {}", layer_idx));
-                ui.monospace(format!("Pressed bits: 0x{:012X}", self.state.pressed_bits));
-                let mut pressed_indices: Vec<usize> = (0..(self.state.keyboard.rows * self.state.keyboard.cols).min(64))
-                    .filter(|i| ((self.state.pressed_bits >> i) & 1) == 1)
-                    .collect();
-                pressed_indices.sort_unstable();
-                ui.monospace(format!("Pressed indices: {:?}", pressed_indices));
-                ui.add_space(10.0);
-            });
+            egui::SidePanel::right("debug")
+                .resizable(true)
+                .show(ctx, |ui| {
+                    ui.add_space(10.0);
+                    ui.heading("Debug");
+                    ui.add_space(5.0);
+                    ui.label(format!("Active layer index: {}", layer_idx));
+                    ui.monospace(format!("Pressed bits: 0x{:012X}", self.state.pressed_bits));
+                    let mut pressed_indices: Vec<usize> =
+                        (0..(self.state.keyboard.rows * self.state.keyboard.cols).min(64))
+                            .filter(|i| ((self.state.pressed_bits >> i) & 1) == 1)
+                            .collect();
+                    pressed_indices.sort_unstable();
+                    ui.monospace(format!("Pressed indices: {:?}", pressed_indices));
+                    ui.add_space(10.0);
+                });
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -279,22 +335,22 @@ impl eframe::App for KeyboardViewerApp {
                 // Show drag and drop zone
                 ui.vertical_centered(|ui| {
                     ui.add_space(50.0);
-                    
+
                     let available_size = ui.available_size();
                     let drop_zone_size = egui::Vec2::new(available_size.x * 0.8, available_size.y * 0.6);
-                    
+
                     let (rect, response) = ui.allocate_exact_size(drop_zone_size, egui::Sense::click());
-                    
+
                     // Draw drop zone background
                     let bg_color = if response.hovered() {
                         Palette::OVERLAY
                     } else {
                         Palette::_SURFACE
                     };
-                    
+
                     ui.painter().rect_filled(rect, 10.0, bg_color);
                     ui.painter().rect_stroke(rect, 10.0, egui::Stroke::new(2.0, Palette::TEXT));
-                    
+
                     // Draw text
                     let text = "Drop your keymap file here\nor click to browse\n(.json, keymap.c, keymap.h)";
                     let text_color = if response.hovered() {
@@ -302,21 +358,21 @@ impl eframe::App for KeyboardViewerApp {
                     } else {
                         Palette::TEXT
                     };
-                    
+
                     let text_galley = ui.painter().layout(
                         text.to_string(),
                         egui::FontId::proportional(24.0),
                         text_color,
                         rect.width() - 40.0
                     );
-                    
+
                     let text_pos = egui::pos2(
                         rect.center().x - text_galley.size().x / 2.0,
                         rect.center().y - text_galley.size().y / 2.0
                     );
-                    
+
                     ui.painter().galley(text_pos, text_galley, text_color);
-                    
+
                     // Handle dropped files
                     if let Some(dropped_files) = ui.input(|i| i.raw.dropped_files.first().cloned()) {
                         if let Some(path) = &dropped_files.path {
@@ -325,7 +381,7 @@ impl eframe::App for KeyboardViewerApp {
                             }
                         }
                     }
-                    
+
                     // Handle click to browse
                     if response.clicked() {
                         self.open_file_dialog();
@@ -335,11 +391,11 @@ impl eframe::App for KeyboardViewerApp {
                 // Show keyboard
             // Ajouter plus d'espace autour du clavier
             ui.add_space(20.0);
-            
+
             // Centrer le clavier avec un conteneur
             ui.vertical_centered(|ui| {
                 ui.add_space(20.0);
-                
+
                 // Conteneur avec padding pour le clavier
                 egui::Frame::none()
                     .inner_margin(egui::Margin::same(30.0))
@@ -370,7 +426,7 @@ impl eframe::App for KeyboardViewerApp {
 						let is_fn = self.state.is_function_key(layer_idx, r, c);
 						let resp = ui.add_sized(key_size, egui::Label::new(" ").sense(Sense::click()));
 						let rect = resp.rect;
-						
+
 						#[cfg(not(any(feature = "rawhid", feature = "qmk_console")))]
 						{
 							if resp.clicked() {
@@ -468,11 +524,11 @@ impl eframe::App for KeyboardViewerApp {
                         ui.add_space(spacing_y);
                     }
                 });
-                
+
                 ui.add_space(20.0);
             });
             }
-            
+
             // Legend and text input under the keyboard (outside the centered container)
             if self.keyboard_loaded && (self.show_legend || self.show_textarea) {
                 ui.add_space(20.0);
@@ -500,12 +556,12 @@ impl eframe::App for KeyboardViewerApp {
                                 ui.add_space(10.0);
                             });
                         });
-                        
+
                         if self.show_textarea {
                             ui.add_space(20.0);
                         }
                     }
-                    
+
                     // Text input on the right (if enabled)
                     if self.show_textarea {
                         egui::Frame::group(ui.style()).show(ui, |ui| {
@@ -524,8 +580,7 @@ impl eframe::App for KeyboardViewerApp {
                 });
             }
         });
-        
 
-		ctx.request_repaint_after(std::time::Duration::from_millis(16));
-	}
+        ctx.request_repaint_after(std::time::Duration::from_millis(16));
+    }
 }
