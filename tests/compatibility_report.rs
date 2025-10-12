@@ -30,11 +30,7 @@ impl CompatibilityStats {
     }
 }
 
-impl Default for CompatibilityStats {
-    fn default() -> Self {
-        Self::new()
-    }
-
+impl CompatibilityStats {
     pub fn parsing_success_rate(&self) -> f64 {
         if self.total_keyboards == 0 {
             0.0
@@ -65,6 +61,12 @@ impl Default for CompatibilityStats {
         } else {
             self.total_render_time_ms as f64 / self.total_keyboards as f64
         }
+    }
+}
+
+impl Default for CompatibilityStats {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
