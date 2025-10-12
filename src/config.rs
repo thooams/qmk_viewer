@@ -1,11 +1,12 @@
 use serde::Deserialize;
 use anyhow::Context;
+use crate::keyboard::KeyboardLayout;
 
 #[derive(Debug, Deserialize)]
 pub struct KeymapConfig {
 	pub keyboard: String,
 	pub keymap: String,
-	pub layers: Vec<Vec<String>>, // each layer is 48 entries for Planck grid
+	pub layers: Vec<Vec<String>>, // each layer contains keycodes for the keyboard
 	pub layout: Option<String>,
 	pub layer_names: Option<Vec<String>>, // optional human-friendly names
 }
@@ -24,5 +25,10 @@ impl KeymapConfig {
                 .with_context(|| format!("failed to parse keymap.c: {}", path));
         }
         anyhow::bail!("unsupported config format (expected .json or .c): {}", path)
+	}
+
+	/// Convert this keymap configuration to a generic keyboard layout
+	pub fn to_keyboard_layout(&self) -> KeyboardLayout {
+		KeyboardLayout::from_layout_data(self.layers.clone(), self.layer_names.clone())
 	}
 }

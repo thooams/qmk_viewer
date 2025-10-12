@@ -25,8 +25,8 @@ fn parse_two_layers() {
     assert_eq!(cfg.layers.len(), 2);
     assert_eq!(cfg.layers[0].len(), 48);
     assert_eq!(cfg.layers[1].len(), 48);
-    // Wrapper normalization should pick inner keycode
-    assert!(cfg.layers[1].iter().any(|s| s == "KC_TAB"));
+    // The raw layer should contain the full MT wrapper, not the inner keycode
+    assert!(cfg.layers[1].iter().any(|s| s == "MT(MOD_LALT, KC_TAB)"));
 }
 
 

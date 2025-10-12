@@ -1,5 +1,5 @@
 use crate::hid::Report;
-use crate::planck::PlanckLayoutState;
+use crate::keyboard::KeyboardState;
 use eframe::egui::{self, Color32, Context, RichText, Sense, Vec2};
 
 // Catppuccin Mocha palette (subset)
@@ -17,8 +17,8 @@ use std::sync::mpsc::Receiver;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
-pub struct PlanckViewerApp {
-	state: PlanckLayoutState,
+pub struct KeyboardViewerApp {
+	state: KeyboardState,
 	rx: Receiver<Report>,
     show_debug: bool,
     show_legend: bool,
@@ -29,8 +29,8 @@ pub struct PlanckViewerApp {
 	manual_pressed: std::collections::HashSet<usize>,
 }
 
-impl PlanckViewerApp {
-    pub fn new(cc: &eframe::CreationContext<'_>, state: PlanckLayoutState, rx: Receiver<Report>) -> Self {
+impl KeyboardViewerApp {
+    pub fn new(cc: &eframe::CreationContext<'_>, state: KeyboardState, rx: Receiver<Report>) -> Self {
         // Try to install symbol-capable fonts so glyphs render (macOS paths first)
         let mut fonts = egui::FontDefinitions::default();
         // Known macOS fonts with symbols/emoji
@@ -65,7 +65,7 @@ impl PlanckViewerApp {
     }
 }
 
-impl eframe::App for PlanckViewerApp {
+impl eframe::App for KeyboardViewerApp {
 	fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
 		// Drain any pending reports
 		while let Ok(rep) = self.rx.try_recv() {

@@ -4,8 +4,9 @@ use qmk_viewer::hid::{HidSource, MockHidSource, Report};
 use qmk_viewer::hid::RawHidSource;
 #[cfg(feature = "qmk_console")]
 use qmk_viewer::hid::QmkConsoleSource;
-use qmk_viewer::planck::{PlanckKeyboard, PlanckLayoutState};
-use qmk_viewer::ui::PlanckViewerApp;
+use qmk_viewer::keyboard::KeyboardState;
+use qmk_viewer::keyboards::planck::PlanckLayout;
+use qmk_viewer::ui::KeyboardViewerApp;
 
 use std::sync::mpsc;
 use std::thread;
@@ -42,25 +43,19 @@ fn main() {
 		}
 	});
 
-	let mut keyboard = PlanckKeyboard::default();
+	let mut keyboard = PlanckLayout::default();
 	if let Some(path) = maybe_json {
 		if let Ok(cfg) = KeymapConfig::load_from_path(&path) {
-			let layer_count = cfg.layers.len().max(1);
-			keyboard.layer_names = cfg.layer_names.unwrap_or_else(|| (0..layer_count).map(|i| format!("Layer {}", i)).collect());
-			keyboard.raw_legends = cfg.layers.clone();
-            keyboard.legends = cfg.layers
-                .into_iter()
-                .map(|layer| layer.into_iter().map(|s| PlanckLayoutState::normalized_label(&s)).collect())
-                .collect();
+			keyboard = cfg.to_keyboard_layout();
 		}
 	}
 
-	let layout_state = PlanckLayoutState::new(keyboard);
+	let layout_state = KeyboardState::new(keyboard);
 
 	let native_options = eframe::NativeOptions::default();
 	let _ = eframe::run_native(
-		"QMK Planck Viewer",
+		"QMK Keyboard Viewer",
 		native_options,
-		Box::new(move |cc| Ok(Box::new(PlanckViewerApp::new(cc, layout_state.clone(), rx)))),
+		Box::new(move |cc| Ok(Box::new(KeyboardViewerApp::new(cc, layout_state.clone(), rx)))),
 	);
 }

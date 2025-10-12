@@ -1,0 +1,493 @@
+//! QMK keycode mapping and translation utilities
+//! 
+//! This module provides comprehensive mapping of QMK keycodes to human-readable
+//! labels and symbols, based on the official QMK documentation.
+
+/// Translate a QMK keycode token to a human-readable label
+pub fn translate_token(tok: &str) -> String {
+    // Map special names to glyphs/characters
+    let t = tok.trim();
+    if t == "TRNS" || t == "NO" || t == "_______" || t == "KC_TRNS" || t == "KC_NO" { return String::new(); }
+    
+    // French accents and specials (KF_* keycodes from the keymap)
+    if let Some(result) = translate_french_accents(t) {
+        return sanitize_glyphs(&result);
+    }
+    
+    // Brackets / punctuation tokens
+    if let Some(result) = translate_punctuation(t) {
+        return sanitize_glyphs(&result);
+    }
+    
+    // Navigation / control glyphs
+    if let Some(result) = translate_navigation(t) {
+        return sanitize_glyphs(&result);
+    }
+    
+    // Modifiers / locks
+    if let Some(result) = translate_modifiers(t) {
+        return sanitize_glyphs(&result);
+    }
+    
+    // Basic letter keycodes (KC_A, KC_B, etc.)
+    if t.starts_with("KC_") && t.len() == 4 {
+        let letter = &t[3..4];
+        if letter.chars().next().unwrap().is_ascii_alphabetic() {
+            return letter.to_lowercase();
+        }
+    }
+    
+    // Other KC_ keycodes
+    if let Some(result) = translate_kc_keycodes(t) {
+        return sanitize_glyphs(&result);
+    }
+    
+    // Also handle single letter tokens (fallback)
+    if t.len() == 1 && t.chars().next().unwrap().is_ascii_alphabetic() {
+        return t.to_lowercase();
+    }
+    
+    // Common icons
+    if let Some(result) = translate_icons(t) {
+        return sanitize_glyphs(&result);
+    }
+    
+    sanitize_glyphs(t)
+}
+
+fn translate_french_accents(t: &str) -> Option<String> {
+    match t {
+        "KF_EGRV" => Some("è".to_string()),
+        "KF_EACU" => Some("é".to_string()),
+        "KF_ECRC" => Some("ê".to_string()),
+        "KF_AGRV" => Some("à".to_string()),
+        "KF_UGRV" => Some("ù".to_string()),
+        "KF_UCRC" => Some("û".to_string()),
+        "KF_ICRC" => Some("î".to_string()),
+        "KF_ACRC" => Some("â".to_string()),
+        "KF_CCED" => Some("ç".to_string()),
+        "KF_DIAE" => Some("¨".to_string()),
+        "KF_AE" => Some("æ".to_string()),
+        "KF_OE" => Some("œ".to_string()),
+        "KF_OCRC" => Some("ô".to_string()),
+        "KF_LAQT" => Some("«".to_string()),
+        "KF_RAQT" => Some("»".to_string()),
+        "KF_LDQT" => Some("\u{201C}".to_string()), // Left double quotation mark
+        "KF_RDQT" => Some("\u{201D}".to_string()), // Right double quotation mark
+        "KF_MDOT" => Some("·".to_string()),
+        "KF_BDOT" => Some("•".to_string()),
+        "KF_DEG" => Some("°".to_string()),
+        "KF_EURO" => Some("€".to_string()),
+        "KF_UNDS" => Some("_".to_string()),
+        "KF_SUP2" => Some("²".to_string()),
+        "KF_IQES" => Some("¿".to_string()),
+        "KF_LARW" => Some("←".to_string()),
+        "KF_RARW" => Some("→".to_string()),
+        "KF_MICR" => Some("μ".to_string()),
+        "KF_PSMS" => Some("±".to_string()),
+        "KF_CROS" => Some("×".to_string()),
+        "KF_QUOT" => Some("'".to_string()),
+        "KF_SLCT" => Some("⌘A".to_string()),
+        "KF_CUT" => Some("⌘X".to_string()),
+        "KF_COPY" => Some("⌘C".to_string()),
+        "KF_PSTE" => Some("⌘V".to_string()),
+        "KF_SAVE" => Some("⌘S".to_string()),
+        "KF_UNDO" => Some("⌘Z".to_string()),
+        "KF_REDO" => Some("⌘⇧Z".to_string()),
+        // Mappings for keycodes without KF_ prefix (as they appear in the UI)
+        "OCRC" => Some("ô".to_string()),
+        "ICRC" => Some("î".to_string()),
+        "BDOT" => Some("•".to_string()),
+        "IQES" => Some("¿".to_string()),
+        "LARW" => Some("←".to_string()),
+        "RARW" => Some("→".to_string()),
+        "MDOT" => Some("·".to_string()),
+        "DEG" => Some("°".to_string()),
+        "UCRC" => Some("û".to_string()),
+        "EURO" => Some("€".to_string()),
+        "ACRC" => Some("â".to_string()),
+        "LDQT" => Some("\u{201C}".to_string()), // Left double quotation mark
+        "RDQT" => Some("\u{201D}".to_string()), // Right double quotation mark
+        "MICR" => Some("μ".to_string()),
+        "PSMS" => Some("±".to_string()),
+        "CROS" => Some("×".to_string()),
+        // Legacy mappings for compatibility
+        "EGRV" => Some("è".to_string()),
+        "EACU" => Some("é".to_string()),
+        "ECRC" => Some("ê".to_string()),
+        "E" => Some("e".to_string()),
+        "AGRV" => Some("à".to_string()),
+        "UGRV" => Some("ù".to_string()),
+        "CCED" => Some("ç".to_string()),
+        "DIAE" => Some("¨".to_string()),
+        "AE" => Some("æ".to_string()),
+        "OE" => Some("œ".to_string()),
+        _ => None,
+    }
+}
+
+fn translate_punctuation(t: &str) -> Option<String> {
+    match t {
+        "KF_LPRN" | "LPRN" => Some("(".to_string()),
+        "KF_RPRN" | "RPRN" => Some(")".to_string()),
+        "KF_LBRC" | "LBRC" => Some("[".to_string()),
+        "KF_RBRC" | "RBRC" => Some("]".to_string()),
+        "KF_LCBR" | "LCBR" => Some("{".to_string()),
+        "KF_RCBR" | "RCBR" => Some("}".to_string()),
+        "KF_LABK" | "LABK" => Some("<".to_string()),
+        "KF_RABK" | "RABK" => Some(">".to_string()),
+        "KF_SLSH" | "SLSH" => Some("/".to_string()),
+        "KF_BSLS" | "BSLS" => Some("\\".to_string()),
+        "KF_PIPE" | "PIPE" => Some("|".to_string()),
+        "KF_COLN" | "COLN" => Some(":".to_string()),
+        "KF_SCLN" | "SCLN" => Some(";".to_string()),
+        "KF_DQUO" | "DQUO" => Some("\"".to_string()),
+        "KF_GRV" | "GRV" => Some("`".to_string()),
+        "KF_TILD" | "TILD" => Some("~".to_string()),
+        "KF_AT" | "AT" => Some("@".to_string()),
+        "KF_HASH" | "HASH" => Some("#".to_string()),
+        "KF_DLR" | "DLR" => Some("$".to_string()),
+        "KF_PERC" | "PERC" => Some("%".to_string()),
+        "KF_AMPR" | "AMPR" => Some("&".to_string()),
+        "KF_ASTR" | "ASTR" => Some("*".to_string()),
+        "KF_EQL" | "EQL" => Some("=".to_string()),
+        "KF_PLUS" | "PLUS" => Some("+".to_string()),
+        "KF_CIRC" | "CIRC" => Some("^".to_string()),
+        "COMM" => Some(",".to_string()),
+        "DOT" => Some(".".to_string()),
+        "QUOT" => Some("'".to_string()),
+        "MINS" => Some("-".to_string()),
+        "UNDS" => Some("_".to_string()),
+        _ => None,
+    }
+}
+
+fn translate_navigation(t: &str) -> Option<String> {
+    match t {
+        "NAV_LCK" => Some("NAV".to_string()),
+        "SW_GRV" => Some("`".to_string()),
+        "SW_TAB" => Some("⇥".to_string()),
+        "CW_TOGG" => Some("Caps".to_string()),
+        "OS_LALT" => Some("⌥".to_string()),
+        "OS_LGUI" => Some("⌘".to_string()),
+        "OS_LSFT" => Some("⇧".to_string()),
+        "OS_LCTL" => Some("⌃".to_string()),
+        "OS_RCTL" => Some("⌃".to_string()),
+        "OS_RSFT" => Some("⇧".to_string()),
+        "OS_RGUI" => Some("⌘".to_string()),
+        "TO(_QWERTY)" => Some("QWERTY".to_string()),
+        "KC_PSCR" => Some("PrtSc".to_string()),
+        "KC_APP" => Some("Menu".to_string()),
+        // Standard navigation
+        "LEFT" => Some("←".to_string()),
+        "RGHT" | "RIGHT" => Some("→".to_string()),
+        "UP" => Some("↑".to_string()),
+        "DOWN" => Some("↓".to_string()),
+        "HOME" => Some("⇱".to_string()),
+        "END" => Some("⇲".to_string()),
+        "PGUP" | "PG_U" | "PGUPD" => Some("⇞".to_string()),
+        "PGDN" | "PG_D" => Some("⇟".to_string()),
+        "BSPC" => Some("⌫".to_string()),
+        "DEL" => Some("⌦".to_string()),
+        "ENT" | "ENTER" => Some("↵".to_string()),
+        "ESC" => Some("⎋".to_string()),
+        "TAB" => Some("⇥".to_string()),
+        "SPC" | "SPACE" => Some("␣".to_string()),
+        _ => None,
+    }
+}
+
+fn translate_modifiers(t: &str) -> Option<String> {
+    match t {
+        "LSFT" | "RSFT" | "SFT" | "SHIFT" => Some("⇧".to_string()),
+        "LCTL" | "RCTL" | "CTL" | "CTRL" | "LCTRL" | "RCTRL" => Some("⌃".to_string()),
+        "LALT" | "RALT" | "ALT" | "LALT_T" => Some("⌥".to_string()),
+        "LGUI" | "RGUI" | "GUI" | "CMD" | "WIN" => Some("⌘".to_string()),
+        "CAPS" | "CAPSLOCK" => Some("⇪".to_string()),
+        _ => None,
+    }
+}
+
+fn translate_kc_keycodes(t: &str) -> Option<String> {
+    match t {
+        // Numbers
+        "KC_1" => Some("1".to_string()),
+        "KC_2" => Some("2".to_string()),
+        "KC_3" => Some("3".to_string()),
+        "KC_4" => Some("4".to_string()),
+        "KC_5" => Some("5".to_string()),
+        "KC_6" => Some("6".to_string()),
+        "KC_7" => Some("7".to_string()),
+        "KC_8" => Some("8".to_string()),
+        "KC_9" => Some("9".to_string()),
+        "KC_0" => Some("0".to_string()),
+        
+        // Special keys
+        "KC_SPC" | "KC_SPACE" => Some("␣".to_string()),
+        "KC_ENT" | "KC_ENTER" => Some("↵".to_string()),
+        "KC_ESC" => Some("⎋".to_string()),
+        "KC_TAB" => Some("⇥".to_string()),
+        "KC_BSPC" => Some("⌫".to_string()),
+        "KC_DEL" => Some("⌦".to_string()),
+        
+        // Navigation
+        "KC_LEFT" => Some("←".to_string()),
+        "KC_RGHT" | "KC_RIGHT" => Some("→".to_string()),
+        "KC_UP" => Some("↑".to_string()),
+        "KC_DOWN" => Some("↓".to_string()),
+        "KC_HOME" => Some("⇱".to_string()),
+        "KC_END" => Some("⇲".to_string()),
+        "KC_PGUP" | "KC_PG_U" => Some("⇞".to_string()),
+        "KC_PGDN" | "KC_PG_D" => Some("⇟".to_string()),
+        
+        // Modifiers
+        "KC_LSFT" | "KC_RSFT" => Some("⇧".to_string()),
+        "KC_LCTL" | "KC_RCTL" => Some("⌃".to_string()),
+        "KC_LALT" | "KC_RALT" => Some("⌥".to_string()),
+        "KC_LGUI" | "KC_RGUI" => Some("⌘".to_string()),
+        "KC_CAPS" | "KC_CAPSLOCK" => Some("⇪".to_string()),
+        
+        // Punctuation
+        "KC_LPRN" => Some("(".to_string()),
+        "KC_RPRN" => Some(")".to_string()),
+        "KC_LBRC" => Some("[".to_string()),
+        "KC_RBRC" => Some("]".to_string()),
+        "KC_LCBR" => Some("{".to_string()),
+        "KC_RCBR" => Some("}".to_string()),
+        "KC_LABK" => Some("<".to_string()),
+        "KC_RABK" => Some(">".to_string()),
+        "KC_COMM" => Some(",".to_string()),
+        "KC_DOT" => Some(".".to_string()),
+        "KC_SLSH" => Some("/".to_string()),
+        "KC_BSLS" => Some("\\".to_string()),
+        "KC_PIPE" => Some("|".to_string()),
+        "KC_COLN" => Some(":".to_string()),
+        "KC_SCLN" => Some(";".to_string()),
+        "KC_QUOT" => Some("'".to_string()),
+        "KC_DQUO" => Some("\"".to_string()),
+        "KC_GRV" => Some("`".to_string()),
+        "KC_TILD" => Some("~".to_string()),
+        "KC_AT" => Some("@".to_string()),
+        "KC_HASH" => Some("#".to_string()),
+        "KC_DLR" => Some("$".to_string()),
+        "KC_PERC" => Some("%".to_string()),
+        "KC_AMPR" => Some("&".to_string()),
+        "KC_ASTR" => Some("*".to_string()),
+        "KC_MINS" => Some("-".to_string()),
+        "KC_UNDS" => Some("_".to_string()),
+        "KC_EQL" => Some("=".to_string()),
+        "KC_PLUS" => Some("+".to_string()),
+        "KC_EXLM" => Some("!".to_string()),
+        "KC_CIRC" => Some("^".to_string()),
+        
+        // Function keys
+        "KC_F1" => Some("F1".to_string()),
+        "KC_F2" => Some("F2".to_string()),
+        "KC_F3" => Some("F3".to_string()),
+        "KC_F4" => Some("F4".to_string()),
+        "KC_F5" => Some("F5".to_string()),
+        "KC_F6" => Some("F6".to_string()),
+        "KC_F7" => Some("F7".to_string()),
+        "KC_F8" => Some("F8".to_string()),
+        "KC_F9" => Some("F9".to_string()),
+        "KC_F10" => Some("F10".to_string()),
+        "KC_F11" => Some("F11".to_string()),
+        "KC_F12" => Some("F12".to_string()),
+        "KC_F13" => Some("F13".to_string()),
+        "KC_F14" => Some("F14".to_string()),
+        "KC_F15" => Some("F15".to_string()),
+        "KC_F16" => Some("F16".to_string()),
+        "KC_F17" => Some("F17".to_string()),
+        "KC_F18" => Some("F18".to_string()),
+        "KC_F19" => Some("F19".to_string()),
+        "KC_F20" => Some("F20".to_string()),
+        "KC_F21" => Some("F21".to_string()),
+        "KC_F22" => Some("F22".to_string()),
+        "KC_F23" => Some("F23".to_string()),
+        "KC_F24" => Some("F24".to_string()),
+        
+        // System keys
+        "KC_PSCR" => Some("PrtSc".to_string()),
+        "KC_APP" => Some("Menu".to_string()),
+        _ => None,
+    }
+}
+
+fn translate_icons(t: &str) -> Option<String> {
+    match t {
+        "UNDO" => Some("↺".to_string()),
+        "REDO" => Some("↻".to_string()),
+        "COPY" => Some("⎘".to_string()),
+        "CUT" => Some("✂".to_string()),
+        "PSTE" | "PASTE" => Some("📋".to_string()),
+        "SAVE" => Some("💾".to_string()),
+        // Quotes and guillemets tokens
+        "LAQT" => Some("«".to_string()),
+        "RAQT" => Some("»".to_string()),
+        // Superscript 2
+        "SUP2" | "SUP" => Some("²".to_string()),
+        // Enter explicit
+        "ENT" | "ENTER" => Some("↵".to_string()),
+        _ => None,
+    }
+}
+
+/// Convert modifier token to glyph representation
+pub fn mod_to_glyph(m: &str) -> String {
+    let mm = m.trim();
+    let g = match mm {
+        // QMK-style MOD_* constants
+        "MOD_LSFT" | "MOD_RSFT" | "MOD_MASK_SHIFT" => "⇧".to_string(),
+        "MOD_LCTL" | "MOD_RCTL" | "MOD_MASK_CTRL" => "⌃".to_string(),
+        "MOD_LALT" | "MOD_RALT" | "MOD_MASK_ALT" => "⌥".to_string(),
+        "MOD_LGUI" | "MOD_RGUI" | "MOD_MASK_GUI" => "⌘".to_string(),
+        // KC_* fallbacks
+        "KC_LSFT" | "KC_RSFT" => "⇧".to_string(),
+        "KC_LCTL" | "KC_RCTL" => "⌃".to_string(),
+        "KC_LALT" | "KC_RALT" => "⌥".to_string(),
+        "KC_LGUI" | "KC_RGUI" => "⌘".to_string(),
+        other => translate_token(other),
+    };
+    sanitize_glyphs(&g)
+}
+
+/// Get display name for layer token
+pub fn layer_display_name(token: &str) -> String {
+    let t = token.trim();
+    let friendly = match t {
+        "DEF" | "BASE" => "Base",
+        "DEF2" => "Base 2",
+        "SPC" => "Space",
+        "SYM" => "Symbols",
+        "SYM_SFT" => "Symbols Shift",
+        "NAV" => "Nav",
+        "NAV_ALT" => "Nav Alt",
+        "NAV_GUI" => "Nav GUI",
+        "NAV_CTL" => "Nav Ctrl",
+        "NUM" => "Num",
+        "MOS" => "Mouse",
+        other => other,
+    };
+    friendly.to_string()
+}
+
+/// Sanitize glyphs to avoid rendering issues
+fn sanitize_glyphs(s: &str) -> String {
+    // Replace uncommon glyphs with ASCII fallbacks to avoid tofu squares
+    let mut out = String::with_capacity(s.len());
+    for ch in s.chars() {
+        let repl = match ch {
+            // macOS modifiers and UI arrows
+            '⌘' => "CMD",
+            '⌥' => "ALT",
+            '⌃' => "CTRL",
+            '⇧' => "SHIFT",
+            '⇪' => "CAPS",
+            '←' => "<",
+            '→' => ">",
+            '↑' => "^",
+            '↓' => "v",
+            '⇱' => "Home",
+            '⇲' => "End",
+            '⇞' => "PgUp",
+            '⇟' => "PgDn",
+            '⌫' => "Bksp",
+            '⌦' => "Del",
+            '↩' => "↵",
+            '↵' => "↵",
+            '⎋' => "Esc",
+            '⇥' => "Tab",
+            '␣' => "Space",
+            // Geometric placeholders that render as tofu
+            '□' | '■' | '◻' | '◼' | '▢' | '▣' => "",
+            // Keep common Latin accents we intend to show
+            c if c == 'é' || c == 'è' || c == 'ê' || c == 'à' || c == 'ù' || c == 'ç' || c == 'æ' || c == 'œ' => {
+                out.push(c);
+                continue;
+            }
+            _ => "",
+        };
+        if repl.is_empty() {
+            // keep ASCII printable
+            if ch.is_ascii() {
+                out.push(ch);
+            }
+        } else {
+            if !out.is_empty() { out.push(' '); }
+            out.push_str(repl);
+        }
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_basic_letter_keycodes() {
+        assert_eq!(translate_token("KC_A"), "a");
+        assert_eq!(translate_token("KC_B"), "b");
+        assert_eq!(translate_token("KC_Z"), "z");
+    }
+
+    #[test]
+    fn test_number_keycodes() {
+        assert_eq!(translate_token("KC_1"), "1");
+        assert_eq!(translate_token("KC_0"), "0");
+    }
+
+    #[test]
+    fn test_modifier_keycodes() {
+        assert_eq!(translate_token("KC_LSFT"), "SHIFT");
+        assert_eq!(translate_token("KC_LCTL"), "CTRL");
+        assert_eq!(translate_token("KC_LALT"), "ALT");
+        assert_eq!(translate_token("KC_LGUI"), "CMD");
+    }
+
+    #[test]
+    fn test_navigation_keycodes() {
+        assert_eq!(translate_token("KC_LEFT"), "<");
+        assert_eq!(translate_token("KC_RGHT"), ">");
+        assert_eq!(translate_token("KC_UP"), "^");
+        assert_eq!(translate_token("KC_DOWN"), "v");
+    }
+
+    #[test]
+    fn test_special_keycodes() {
+        assert_eq!(translate_token("KC_ESC"), "Esc");
+        assert_eq!(translate_token("KC_TAB"), "Tab");
+        assert_eq!(translate_token("KC_BSPC"), "Bksp");
+        assert_eq!(translate_token("KC_DEL"), "Del");
+    }
+
+    #[test]
+    fn test_french_accents() {
+        assert_eq!(translate_token("KF_EGRV"), "è");
+        assert_eq!(translate_token("KF_EACU"), "é");
+        assert_eq!(translate_token("KF_CCED"), "ç");
+    }
+
+    #[test]
+    fn test_transparent_keys() {
+        assert_eq!(translate_token("KC_TRNS"), "");
+        assert_eq!(translate_token("KC_NO"), "");
+        assert_eq!(translate_token("_______"), "");
+        assert_eq!(translate_token("TRNS"), "");
+        assert_eq!(translate_token("NO"), "");
+    }
+
+    #[test]
+    fn test_mod_to_glyph() {
+        assert_eq!(mod_to_glyph("MOD_LSFT"), "SHIFT");
+        assert_eq!(mod_to_glyph("MOD_LCTL"), "CTRL");
+        assert_eq!(mod_to_glyph("KC_LALT"), "ALT");
+    }
+
+    #[test]
+    fn test_layer_display_name() {
+        assert_eq!(layer_display_name("DEF"), "Base");
+        assert_eq!(layer_display_name("SYM"), "Symbols");
+        assert_eq!(layer_display_name("NAV"), "Nav");
+    }
+}

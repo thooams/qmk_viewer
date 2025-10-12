@@ -1,1 +1,0 @@
-/Users/thomas/qmk_firmware/keyboards/planck/keymaps/thooams/keymap.c

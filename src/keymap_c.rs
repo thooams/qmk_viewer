@@ -44,11 +44,6 @@ pub fn parse_keymap_c(source: &str) -> anyhow::Result<KeymapConfig> {
         anyhow::bail!("no LAYOUT(...) blocks found in keymap.c");
     }
 
-    // If any layer has fewer than 48 entries, pad with _______
-    for layer in &mut layers {
-        while layer.len() < 48 { layer.push("_______".to_string()); }
-    }
-
     // Try to extract layer bracket names like [NAV], [SYM_SFT]
     let mut names: Vec<String> = Vec::new();
     let mut idx = 0usize;

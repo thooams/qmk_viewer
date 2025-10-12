@@ -1,5 +1,6 @@
-use qmk_viewer::hid::{parse_rawhid_packet, Report};
-use qmk_viewer::planck::{PlanckKeyboard, PlanckLayoutState};
+use qmk_viewer::hid::parse_rawhid_packet;
+use qmk_viewer::keyboard::KeyboardState;
+use qmk_viewer::keyboards::planck::PlanckLayout;
 
 #[test]
 fn parse_packet_ok() {
@@ -15,8 +16,8 @@ fn parse_packet_ok() {
 
 #[test]
 fn mapping_and_pressed() {
-	let kb = PlanckKeyboard::default();
-	let mut st = PlanckLayoutState::new(kb);
+	let kb = PlanckLayout::default();
+	let mut st = KeyboardState::new(kb);
 	// Press row 1, col 3
 	let idx = st.index_for(1, 3).unwrap();
 	let bits = 1u64 << idx;
@@ -27,8 +28,8 @@ fn mapping_and_pressed() {
 
 #[test]
 fn layer_set() {
-	let kb = PlanckKeyboard::default();
-	let mut st = PlanckLayoutState::new(kb);
+	let kb = PlanckLayout::default();
+	let mut st = KeyboardState::new(kb);
 	st.set_layer(3);
 	assert_eq!(st.active_layer, 3);
 }
