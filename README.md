@@ -4,7 +4,7 @@ A cross-platform application for viewing and visualizing QMK keyboard layouts wi
 
 ## Demo
 
-https://github.com/user-attachments/assets/screen.mov
+![demo.gif](demo.gif)
 
 ## Features
 
@@ -160,10 +160,10 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
 // Call this function to send keyboard state
 void send_keyboard_state(void) {
     uint8_t data[32] = {0};
-    
+
     // Pack the data: [layer][pressed_bits...]
     data[0] = get_highest_layer(layer_state);
-    
+
     // Pack pressed keys into bits (up to 32 keys)
     for (int i = 0; i < 32 && i < MATRIX_ROWS * MATRIX_COLS; i++) {
         uint8_t row = i / MATRIX_COLS;
@@ -172,7 +172,7 @@ void send_keyboard_state(void) {
             data[1 + (i / 8)] |= (1 << (i % 8));
         }
     }
-    
+
     raw_hid_send(data, 32);
 }
 
@@ -202,7 +202,7 @@ Add this to your `keymap.c`:
 void send_console_state(void) {
     // Send layer and pressed keys
     uprintf("LAYER:%d\n", get_highest_layer(layer_state));
-    
+
     // Send pressed keys
     for (int row = 0; row < MATRIX_ROWS; row++) {
         for (int col = 0; col < MATRIX_COLS; col++) {
@@ -290,7 +290,7 @@ cargo test compatibility_report --release -- --nocapture
 The compatibility tests generate several reports:
 
 - **`tests/compatibility_report.md`** - Parsing compatibility results
-- **`tests/ui_rendering_report.md`** - UI rendering compatibility results  
+- **`tests/ui_rendering_report.md`** - UI rendering compatibility results
 - **`tests/comprehensive_compatibility_report.md`** - Combined analysis with recommendations
 
 ### Test Coverage
