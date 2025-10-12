@@ -7,7 +7,7 @@ APP_PATH="dist/macos/QMK Keyboard Viewer.app"
 
 if [ ! -d "$APP_PATH" ]; then
     echo "Error: App bundle not found at $APP_PATH"
-    echo "Please run ./build-macos.sh first"
+    echo "Please run ./scripts/build-macos.sh first"
     exit 1
 fi
 

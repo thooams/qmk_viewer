@@ -12,7 +12,7 @@ This document explains how to build QMK Keyboard Viewer for different platforms.
 
 ### macOS
 ```bash
-./build-macos-complete.sh
+./scripts/build-macos-complete.sh
 ```
 Creates a `.app` bundle with proper icon support and fixes common macOS issues.
 
@@ -22,12 +22,12 @@ Creates a `.app` bundle with proper icon support and fixes common macOS issues.
 **Troubleshooting:**
 If you get "damaged or incomplete" error:
 ```bash
-./fix-macos-app.sh
+./scripts/fix-macos-app.sh
 ```
 
 ### Linux
 ```bash
-./build-linux.sh
+./scripts/build-linux.sh
 ```
 Creates an AppDir structure that can be converted to AppImage.
 
@@ -38,10 +38,10 @@ Creates an AppDir structure that can be converted to AppImage.
 ### Windows
 ```bash
 # PowerShell (recommended)
-pwsh -File build-windows.ps1 -WithIcon
+pwsh -File scripts/build-windows.ps1 -WithIcon
 
 # Or Batch
-build-windows.bat
+scripts/build-windows.bat
 ```
 Creates a Windows executable.
 
@@ -51,7 +51,7 @@ Creates a Windows executable.
 
 ### All Platforms
 ```bash
-./build-all.sh
+./scripts/build-all.sh
 ```
 Automatically detects the current platform and builds accordingly.
 

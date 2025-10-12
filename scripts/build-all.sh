@@ -28,18 +28,18 @@ echo "Detected platform: $PLATFORM"
 case $PLATFORM in
     "macos")
         echo "Building for macOS..."
-        ./build-macos.sh
+        ./scripts/build-macos.sh
         ;;
     "linux")
         echo "Building for Linux..."
-        ./build-linux.sh
+        ./scripts/build-linux.sh
         ;;
     "windows")
         echo "Building for Windows..."
         if command -v pwsh &> /dev/null; then
-            pwsh -File build-windows.ps1 -WithIcon
+            pwsh -File scripts/build-windows.ps1 -WithIcon
         else
-            ./build-windows.bat
+            ./scripts/build-windows.bat
         fi
         ;;
 esac
@@ -48,9 +48,9 @@ echo ""
 echo "Build completed for $PLATFORM!"
 echo ""
 echo "Available build scripts:"
-echo "  ./build-macos.sh    - Build macOS .app bundle"
-echo "  ./build-linux.sh    - Build Linux AppDir"
-echo "  ./build-windows.ps1 - Build Windows executable (PowerShell)"
-echo "  ./build-windows.bat - Build Windows executable (Batch)"
+echo "  ./scripts/build-macos.sh    - Build macOS .app bundle"
+echo "  ./scripts/build-linux.sh    - Build Linux AppDir"
+echo "  ./scripts/build-windows.ps1 - Build Windows executable (PowerShell)"
+echo "  ./scripts/build-windows.bat - Build Windows executable (Batch)"
 echo ""
 echo "To build for other platforms, run the appropriate script."

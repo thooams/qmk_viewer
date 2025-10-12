@@ -68,7 +68,7 @@ fn test_keycode_mapping_comprehensive() {
     assert_eq!(sub, "MO");
     
     let (main, sub) = state.display_parts(0, 0, 2);
-    assert_eq!(main, "SHIFT");
+    assert_eq!(main, "Shift");
     assert_eq!(sub, "");
     
     let (main, sub) = state.display_parts(0, 0, 3);
@@ -77,7 +77,7 @@ fn test_keycode_mapping_comprehensive() {
     
     let (main, sub) = state.display_parts(0, 0, 4);
     assert_eq!(main, "Space");
-    assert_eq!(sub, "CTRL");
+    assert_eq!(sub, "Ctrl");
     
     let (main, sub) = state.display_parts(0, 0, 5);
     assert_eq!(main, "Tab");

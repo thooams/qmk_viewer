@@ -19,12 +19,12 @@ A cross-platform application for viewing and visualizing QMK keyboard layouts wi
 
 ```bash
 # Build for current platform
-./build-all.sh
+./scripts/build-all.sh
 
 # Or build specifically:
-./build-macos-complete.sh    # macOS
-./build-linux.sh             # Linux
-./build-windows.ps1          # Windows (PowerShell)
+./scripts/build-macos-complete.sh    # macOS
+./scripts/build-linux.sh             # Linux
+./scripts/build-windows.ps1          # Windows (PowerShell)
 ```
 
 ### Running
@@ -51,8 +51,8 @@ cargo run
 - `.c` / `.h` - QMK C keymap files
 
 **Example files:**
-- `test_keymap.json` - Sample JSON keymap
-- `test_keymap.c` - Sample C keymap
+- `tests/files/test_keymap.json` - Sample JSON keymap
+- `tests/files/test_keymap.c` - Sample C keymap
 
 ## Project Structure
 
@@ -69,6 +69,22 @@ src/
 ├── main.rs             # Entry point
 ├── config.rs           # Configuration loading
 └── lib.rs              # Module exports
+
+scripts/
+├── build-all.sh         # Build for all platforms
+├── build-macos.sh       # macOS build
+├── build-macos-complete.sh # Complete macOS build with icons
+├── build-linux.sh       # Linux build
+├── build-windows.bat    # Windows build (batch)
+├── build-windows.ps1    # Windows build (PowerShell)
+└── fix-macos-app.sh     # macOS app fix script
+
+tests/
+├── files/               # Test keymap files
+│   ├── test_keymap.json
+│   ├── test_keymap.c
+│   └── thooams.json
+└── *.rs                 # Test modules
 ```
 
 ## Build Artifacts
