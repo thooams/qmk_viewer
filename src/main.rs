@@ -19,7 +19,7 @@ fn main() {
 
 	let args: Vec<String> = std::env::args().collect();
 	let maybe_json = args.get(1).cloned();
-	let maybe_port = args.get(2).cloned(); // optional: explicit serial port
+	let _maybe_port = args.get(2).cloned(); // optional: explicit serial port
 
 	let (tx, rx) = mpsc::channel::<Report>();
 

@@ -10,6 +10,8 @@ A cross-platform application for viewing and visualizing QMK keyboard layouts wi
 - **Cross-Platform**: Native builds for macOS, Windows, and Linux
 - **Layer Visualization**: View and switch between keyboard layers
 - **Real-time Updates**: Live keyboard state monitoring (when connected)
+- **File Loading**: Load keymap files directly (.json, .c, .h formats)
+- **Interactive Interface**: Browse and load keymap files with visual feedback
 
 ## Quick Start
 
@@ -36,6 +38,21 @@ cargo run
 # Linux: ./dist/linux/QMK_Keyboard_Viewer.AppDir/AppRun
 # Windows: Run the .exe file
 ```
+
+### Loading Keymap Files
+
+1. **Start the application**
+2. **Enter file path** in the "File:" input field, or click "📂 Browse"
+3. **Click "✅ Load"** to load the keymap
+4. **View the status** - success or error messages will appear below the buttons
+
+**Supported formats:**
+- `.json` - QMK JSON keymap files
+- `.c` / `.h` - QMK C keymap files
+
+**Example files:**
+- `test_keymap.json` - Sample JSON keymap
+- `test_keymap.c` - Sample C keymap
 
 ## Project Structure
 

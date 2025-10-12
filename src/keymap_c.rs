@@ -114,7 +114,7 @@ fn split_items(inner: &str) -> Vec<String> {
     items
 }
 
-fn normalize_token(tok: &str) -> String {
+fn _normalize_token(tok: &str) -> String {
     let t = tok
         .trim()
         .trim_end_matches(',')
@@ -137,6 +137,7 @@ fn normalize_token(tok: &str) -> String {
     t
 }
 
+#[allow(dead_code)]
 fn strip_func(s: &str, name: &str) -> Option<String> {
     let prefix = format!("{}(", name);
     if s.starts_with(&prefix) && s.ends_with(')') {

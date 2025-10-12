@@ -77,7 +77,7 @@ impl RawHidSource {
             let usage_page = dev.usage_page();
             let usage = dev.usage();
 			eprintln!("Found device: VID={:04X} PID={:04X} Product='{}'", vendor, product_id, product);
-			let prod_lc = product.to_lowercase();
+            let _prod_lc = product.to_lowercase();
             // Accept ONLY Planck Raw HID interface: usage_page 0xFF60, usage 0x61
             // or explicitly the known Planck VID/PID
             let is_qmk_rawhid = usage_page == 0xFF60 && usage == 0x61;

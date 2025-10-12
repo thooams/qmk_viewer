@@ -75,6 +75,8 @@ $RECYCLE.BIN/
 # Test files
 test_*.json
 *.test.json
+test_keymap.json
+test_keymap.c
 
 # Environment files
 .env
