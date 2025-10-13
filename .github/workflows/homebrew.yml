@@ -1,0 +1,83 @@
+name: Publish Homebrew Formula
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-homebrew:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout qmk_viewer repo
+        uses: actions/checkout@v4
+
+      - name: Extract release info
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "TARBALL_URL=https://github.com/thooams/qmk_viewer/archive/refs/tags/$TAG.tar.gz" >> $GITHUB_ENV
+
+      - name: Compute SHA256
+        run: |
+          curl -L "$TARBALL_URL" -o source.tar.gz
+          SHA256=$(shasum -a 256 source.tar.gz | cut -d ' ' -f1)
+          echo "SHA256=$SHA256" >> $GITHUB_ENV
+          echo "Release TAG=$TAG, SHA256=$SHA256"
+
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@v4
+        with:
+          repository: thooams/homebrew-qmkviewer
+          token: ${{ secrets.TAP_TOKEN }}
+          path: tap
+
+      - name: Update Formula/qmk_viewer.rb
+        run: |
+          mkdir -p tap/Formula
+          FORMULA_FILE="tap/Formula/qmk_viewer.rb"
+
+          # Génère un fichier temporaire avec la nouvelle formule
+          cat > temp_formula.rb <<'EOF'
+class QmkViewer < Formula
+  desc "Visualiseur graphique pour keymaps QMK"
+  homepage "https://github.com/thooams/qmk_viewer"
+  url "${TARBALL_URL}"
+  sha256 "${SHA256}"
+  license "MIT"
+
+  depends_on "rust" => :build
+
+  def install
+    system "cargo", "install", *std_cargo_args
+  end
+
+  test do
+    system "#{bin}/qmk-viewer", "--version"
+  end
+end
+EOF
+
+          # Remplace les variables dans le Ruby
+          sed -i "s|\${TARBALL_URL}|${TARBALL_URL}|g" temp_formula.rb
+          sed -i "s|\${SHA256}|${SHA256}|g" temp_formula.rb
+
+          # Vérifie si le fichier existe et s'il a changé
+          if [ -f "$FORMULA_FILE" ] && cmp -s temp_formula.rb "$FORMULA_FILE"; then
+            echo "La formule n’a pas changé. Aucun commit nécessaire."
+            exit 0
+          fi
+
+          # Déplace le nouveau fichier
+          mv temp_formula.rb "$FORMULA_FILE"
+          echo "Formule mise à jour avec TAG=$TAG et SHA256=$SHA256"
+
+      - name: Commit & push formula update
+        run: |
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/qmk_viewer.rb
+          git commit -m "Update formula for ${TAG}" || echo "Rien à commit"
+          git push origin main
+

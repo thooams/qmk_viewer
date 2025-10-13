@@ -1,12 +1,21 @@
 # QMK Keyboard Viewer
 
-[![CI](https://github.com/thomas/qmk_viewer/workflows/CI/badge.svg)](https://github.com/thomas/qmk_viewer/actions)
-[![Release](https://github.com/thomas/qmk_viewer/workflows/Release/badge.svg)](https://github.com/thomas/qmk_viewer/actions)
-[![Version](https://img.shields.io/github/v/release/thomas/qmk_viewer)](https://github.com/thomas/qmk_viewer/releases)
+[![CI](https://github.com/thooams/qmk_viewer/actions/workflows/ci.yml/badge.svg)](https://github.com/thooams/qmk_viewer/actions/workflows/ci.yml)
+[![Release](https://github.com/thooams/qmk_viewer/actions/workflows/release.yml/badge.svg)](https://github.com/thooams/qmk_viewer/actions/workflows/release.yml)
+[![Version](https://img.shields.io/github/v/release/thooams/qmk_viewer)](https://github.com/thooams/qmk_viewer/releases)
 
 A cross-platform application for viewing and visualizing QMK keyboard layouts with support for any QMK-compatible keyboard.
 
 ## Demo
+## Installation (macOS via Homebrew)
+
+```bash
+brew tap thooams/qmkviewer
+brew install qmk_viewer
+
+brew upgrade qmk_viewer
+```
+
 
 ![demo.gif](demo.gif)
 
