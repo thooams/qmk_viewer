@@ -61,22 +61,21 @@ jobs:
           ARM_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.vars.outputs.version }}/qmk_viewer-${{ steps.vars.outputs.version }}-macos-arm64.zip"
           INTEL_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.vars.outputs.version }}/qmk_viewer-${{ steps.vars.outputs.version }}-macos-x86_64.zip"
 
-          # Replace version line (if present)
-          sed -i "" -E "s/^(\s*version\s+\")[^"]+(\")/\\1${VERSION}\\2/" "$FORMULA_PATH" || true
+          # Update Intel URL and SHA256
+          sed -i "" -E "s#(on_intel do[[:space:]]*url \")[^\"]+(\")#\\1${INTEL_URL}\\2#" "$FORMULA_PATH"
+          sed -i "" -E "s#(on_intel do[[:space:]]*url \".*[[:space:]]*sha256 \")[^\"]+(\")#\\1${{ steps.sha.outputs.intel_sha }}\\2#" "$FORMULA_PATH"
 
-          # Replace on_macos blocks for arm/intel URLs & sha256
-          # Try common patterns; if not present, print a helpful message
-          if grep -q "on_macos" "$FORMULA_PATH"; then
-            # Update arm URL/sha
-            sed -i "" -E "s#(on_arm do[[:space:][:cntrl:]]+url \')[^']+(\')#\\1${ARM_URL}\\2#" "$FORMULA_PATH" || true
-            sed -i "" -E "s#(on_arm do[[:space:][:cntrl:]]+url .*[[:cntrl:][:space:]]+sha256 \')[^']+(\')#\\1${{ steps.sha.outputs.arm_sha }}\\2#" "$FORMULA_PATH" || true
-            # Update intel URL/sha
-            sed -i "" -E "s#(on_intel do[[:space:][:cntrl:]]+url \')[^']+(\')#\\1${INTEL_URL}\\2#" "$FORMULA_PATH" || true
-            sed -i "" -E "s#(on_intel do[[:space:][:cntrl:]]+url .*[[:cntrl:][:space:]]+sha256 \')[^']+(\')#\\1${{ steps.sha.outputs.intel_sha }}\\2#" "$FORMULA_PATH" || true
-          else
-            echo "⚠️  'on_macos' blocks not found. Please adapt formula to use per-arch URLs." >&2
-            exit 1
-          fi
+          # Update ARM URL and SHA256
+          sed -i "" -E "s#(on_arm do[[:space:]]*url \")[^\"]+(\")#\\1${ARM_URL}\\2#" "$FORMULA_PATH"
+          sed -i "" -E "s#(on_arm do[[:space:]]*url \".*[[:space:]]*sha256 \")[^\"]+(\")#\\1${{ steps.sha.outputs.arm_sha }}\\2#" "$FORMULA_PATH"
+
+          echo "✅ Formula updated successfully"
+          echo "📋 Updated URLs:"
+          echo "   Intel: ${INTEL_URL}"
+          echo "   ARM: ${ARM_URL}"
+          echo "📋 Updated SHA256:"
+          echo "   Intel: ${{ steps.sha.outputs.intel_sha }}"
+          echo "   ARM: ${{ steps.sha.outputs.arm_sha }}"
 
       - name: Commit and push changes
         working-directory: tap
