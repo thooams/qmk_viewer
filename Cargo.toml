@@ -1,6 +1,6 @@
 [package]
 name = "qmk_viewer"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Planck keyboard viewer for QMK with layer/pressed keys visualization"
 license = "MIT"

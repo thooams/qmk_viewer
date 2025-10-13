@@ -1,3 +1,95 @@
+name: Homebrew Tap Update
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  update-homebrew:
+    name: Update Homebrew tap formula
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Extract version from release tag
+        id: vars
+        run: |
+          TAG=${GITHUB_REF##*/}
+          VERSION=${TAG#v}
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Download macOS artifacts from release
+        uses: robinraju/release-downloader@v1.10
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ steps.vars.outputs.tag }}
+          fileName: |
+            qmk_viewer-${{ steps.vars.outputs.version }}-macos-arm64.zip
+            qmk_viewer-${{ steps.vars.outputs.version }}-macos-x86_64.zip
+          out-file-path: artifacts
+
+      - name: Compute SHA256 checksums
+        id: sha
+        run: |
+          ARM_FILE="artifacts/qmk_viewer-${{ steps.vars.outputs.version }}-macos-arm64.zip"
+          INTEL_FILE="artifacts/qmk_viewer-${{ steps.vars.outputs.version }}-macos-x86_64.zip"
+          ARM_SHA=$(sha256sum "$ARM_FILE" | awk '{print $1}')
+          INTEL_SHA=$(sha256sum "$INTEL_FILE" | awk '{print $1}')
+          echo "arm_sha=${ARM_SHA}" >> $GITHUB_OUTPUT
+          echo "intel_sha=${INTEL_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Checkout tap repository
+        uses: actions/checkout@v4
+        with:
+          repository: thooams/homebrew-qmkviewer
+          token: ${{ secrets.TAP_TOKEN }}
+          path: tap
+
+      - name: Update formula
+        working-directory: tap
+        run: |
+          set -euo pipefail
+          FORMULA_PATH="Formula/qmk_viewer.rb"
+          if [ ! -f "$FORMULA_PATH" ]; then
+            echo "❌ Formula not found at $FORMULA_PATH" >&2
+            exit 1
+          fi
+
+          VERSION='${{ steps.vars.outputs.version }}'
+          ARM_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.vars.outputs.version }}/qmk_viewer-${{ steps.vars.outputs.version }}-macos-arm64.zip"
+          INTEL_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.vars.outputs.version }}/qmk_viewer-${{ steps.vars.outputs.version }}-macos-x86_64.zip"
+
+          # Replace version line (if present)
+          sed -i "" -E "s/^(\s*version\s+\")[^"]+(\")/\\1${VERSION}\\2/" "$FORMULA_PATH" || true
+
+          # Replace on_macos blocks for arm/intel URLs & sha256
+          # Try common patterns; if not present, print a helpful message
+          if grep -q "on_macos" "$FORMULA_PATH"; then
+            # Update arm URL/sha
+            sed -i "" -E "s#(on_arm do[[:space:][:cntrl:]]+url \')[^']+(\')#\\1${ARM_URL}\\2#" "$FORMULA_PATH" || true
+            sed -i "" -E "s#(on_arm do[[:space:][:cntrl:]]+url .*[[:cntrl:][:space:]]+sha256 \')[^']+(\')#\\1${{ steps.sha.outputs.arm_sha }}\\2#" "$FORMULA_PATH" || true
+            # Update intel URL/sha
+            sed -i "" -E "s#(on_intel do[[:space:][:cntrl:]]+url \')[^']+(\')#\\1${INTEL_URL}\\2#" "$FORMULA_PATH" || true
+            sed -i "" -E "s#(on_intel do[[:space:][:cntrl:]]+url .*[[:cntrl:][:space:]]+sha256 \')[^']+(\')#\\1${{ steps.sha.outputs.intel_sha }}\\2#" "$FORMULA_PATH" || true
+          else
+            echo "⚠️  'on_macos' blocks not found. Please adapt formula to use per-arch URLs." >&2
+            exit 1
+          fi
+
+      - name: Commit and push changes
+        working-directory: tap
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "qmk_viewer ${'${{ steps.vars.outputs.version }}'}: update URLs and checksums"
+          git push origin HEAD:main
 name: Publish Homebrew Formula (Multi-Arch)
 
 on:

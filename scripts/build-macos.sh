@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-echo "🍎 Building QMK Keyboard Viewer for macOS..."
+echo "🍎 Building QMK Viewer for macOS..."
 echo "📂 Working directory: $(pwd)"
 
 # Clean previous builds
@@ -18,12 +18,12 @@ mkdir -p dist/macos
 
 # Create app bundle structure
 echo "📁 Creating app bundle structure..."
-mkdir -p "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS"
-mkdir -p "dist/macos/QMK Keyboard Viewer.app/Contents/Resources"
+mkdir -p "dist/macos/QMK Viewer.app/Contents/MacOS"
+mkdir -p "dist/macos/QMK Viewer.app/Contents/Resources"
 
 # Create Info.plist
 echo "📋 Creating Info.plist..."
-cat > "dist/macos/QMK Keyboard Viewer.app/Contents/Info.plist" << 'EOF'
+cat > "dist/macos/QMK Viewer.app/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -33,13 +33,13 @@ cat > "dist/macos/QMK Keyboard Viewer.app/Contents/Info.plist" << 'EOF'
     <key>CFBundleIdentifier</key>
     <string>com.qmk.keyboard-viewer</string>
     <key>CFBundleName</key>
-    <string>QMK Keyboard Viewer</string>
+    <string>QMK Viewer</string>
     <key>CFBundleDisplayName</key>
-    <string>QMK Keyboard Viewer</string>
+    <string>QMK Viewer</string>
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>1.0.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.0.1</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -86,7 +86,7 @@ iconutil -c icns dist/macos/qmk-viewer.iconset -o dist/macos/qmk-viewer.icns
 
 # Copy icon to app bundle
 echo "📋 Copying icon to app bundle..."
-cp dist/macos/qmk-viewer.icns "dist/macos/QMK Keyboard Viewer.app/Contents/Resources/"
+cp dist/macos/qmk-viewer.icns "dist/macos/QMK Viewer.app/Contents/Resources/"
 
 # Build the Rust application with rawhid feature
 echo "🦀 Building Rust application with rawhid feature..."
@@ -101,31 +101,31 @@ fi
 
 # Copy executable to bundle
 echo "📦 Copying executable to app bundle..."
-cp target/release/qmk_viewer "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/"
+cp target/release/qmk_viewer "dist/macos/QMK Viewer.app/Contents/MacOS/"
 
 # Set proper permissions
 echo "🔐 Setting permissions..."
-chmod +x "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer"
-chmod -R 755 "dist/macos/QMK Keyboard Viewer.app"
+chmod +x "dist/macos/QMK Viewer.app/Contents/MacOS/qmk_viewer"
+chmod -R 755 "dist/macos/QMK Viewer.app"
 
 # Remove quarantine attribute
 echo "🛡️  Removing quarantine attribute..."
-xattr -d com.apple.quarantine "dist/macos/QMK Keyboard Viewer.app" 2>/dev/null || true
-xattr -d com.apple.metadata:kMDItemWhereFroms "dist/macos/QMK Keyboard Viewer.app" 2>/dev/null || true
+xattr -d com.apple.quarantine "dist/macos/QMK Viewer.app" 2>/dev/null || true
+xattr -d com.apple.metadata:kMDItemWhereFroms "dist/macos/QMK Viewer.app" 2>/dev/null || true
 
 # Verify the app bundle
 echo "✅ Verifying app bundle..."
-if [ -f "dist/macos/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer" ] && [ -f "dist/macos/QMK Keyboard Viewer.app/Contents/Resources/qmk-viewer.icns" ]; then
+if [ -f "dist/macos/QMK Viewer.app/Contents/MacOS/qmk_viewer" ] && [ -f "dist/macos/QMK Viewer.app/Contents/Resources/qmk-viewer.icns" ]; then
     echo ""
     echo "🎉 macOS bundle created successfully!"
-    echo "📍 Location: dist/macos/QMK Keyboard Viewer.app"
+    echo "📍 Location: dist/macos/QMK Viewer.app"
     echo "🎯 You can now double-click the app to run it."
     echo ""
-    echo "📊 Bundle size: $(du -sh 'dist/macos/QMK Keyboard Viewer.app' | cut -f1)"
+    echo "📊 Bundle size: $(du -sh 'dist/macos/QMK Viewer.app' | cut -f1)"
     echo ""
     echo "💡 If you get a security warning:"
     echo "   1. Right-click the app and select 'Open'"
-    echo "   2. Or run: open 'dist/macos/QMK Keyboard Viewer.app'"
+    echo "   2. Or run: open 'dist/macos/QMK Viewer.app'"
     echo "   3. Or run: ./scripts/fix-macos-app.sh"
 else
     echo "❌ Error: App bundle verification failed"

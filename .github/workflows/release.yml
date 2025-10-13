@@ -196,18 +196,18 @@ jobs:
           mkdir -p dist
           rm -rf "dist/macos-arm64" "dist/macos-x86_64"
           mkdir -p "dist/macos-arm64" "dist/macos-x86_64"
-          cp -R "dist/macos/QMK Keyboard Viewer.app" "dist/macos-arm64/QMK Keyboard Viewer.app"
-          cp -R "dist/macos/QMK Keyboard Viewer.app" "dist/macos-x86_64/QMK Keyboard Viewer.app"
+          cp -R "dist/macos/QMK Viewer.app" "dist/macos-arm64/QMK Viewer.app"
+          cp -R "dist/macos/QMK Viewer.app" "dist/macos-x86_64/QMK Viewer.app"
 
           # Replace executable with arch-specific binaries
-          cp -f target/aarch64-apple-darwin/release/qmk_viewer "dist/macos-arm64/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer"
-          cp -f target/x86_64-apple-darwin/release/qmk_viewer "dist/macos-x86_64/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer"
-          chmod +x "dist/macos-arm64/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer"
-          chmod +x "dist/macos-x86_64/QMK Keyboard Viewer.app/Contents/MacOS/qmk_viewer"
+          cp -f target/aarch64-apple-darwin/release/qmk_viewer "dist/macos-arm64/QMK Viewer.app/Contents/MacOS/qmk_viewer"
+          cp -f target/x86_64-apple-darwin/release/qmk_viewer "dist/macos-x86_64/QMK Viewer.app/Contents/MacOS/qmk_viewer"
+          chmod +x "dist/macos-arm64/QMK Viewer.app/Contents/MacOS/qmk_viewer"
+          chmod +x "dist/macos-x86_64/QMK Viewer.app/Contents/MacOS/qmk_viewer"
 
           # Package per-arch apps
-          (cd dist/macos-arm64 && zip -r ../qmk_viewer-${{ needs.create-release.outputs.version }}-macos-arm64.zip "QMK Keyboard Viewer.app")
-          (cd dist/macos-x86_64 && zip -r ../qmk_viewer-${{ needs.create-release.outputs.version }}-macos-x86_64.zip "QMK Keyboard Viewer.app")
+          (cd dist/macos-arm64 && zip -r ../qmk_viewer-${{ needs.create-release.outputs.version }}-macos-arm64.zip "QMK Viewer.app")
+          (cd dist/macos-x86_64 && zip -r ../qmk_viewer-${{ needs.create-release.outputs.version }}-macos-x86_64.zip "QMK Viewer.app")
       
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
