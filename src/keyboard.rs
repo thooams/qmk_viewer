@@ -177,6 +177,7 @@ impl KeyboardState {
                     || s.starts_with("DF(")
                     || s.starts_with("LT(")
                     || s.starts_with("MT(")
+                    || s.contains("_T(")
             }
             None => false,
         }
@@ -186,7 +187,7 @@ impl KeyboardState {
         match self.raw_legend_at(layer, row, col) {
             Some(r) => {
                 let s = r.trim();
-                s.starts_with("LT(") || s.starts_with("MT(")
+                s.starts_with("LT(") || s.starts_with("MT(") || s.contains("_T(")
             }
             None => false,
         }
@@ -252,6 +253,23 @@ impl KeyboardState {
                     main = main.to_uppercase();
                 }
                 let sub = mod_to_glyph(parts[0]);
+                return (main, sub);
+            }
+        }
+
+        // *_T(key) => main=key, sub=modifier (like LSFT_T(KC_SCLN))
+        if let Some(pos) = s.find("_T(") {
+            let (mod_tok, rest) = s.split_at(pos);
+            if let Some(inner) = rest.strip_prefix("_T(").and_then(|t| t.strip_suffix(')')) {
+                let mut main = translate_token(inner.trim());
+                // Apply shift transformation to letters
+                if shift_pressed
+                    && main.len() == 1
+                    && main.chars().next().unwrap().is_ascii_lowercase()
+                {
+                    main = main.to_uppercase();
+                }
+                let sub = mod_to_glyph(mod_tok.trim());
                 return (main, sub);
             }
         }

@@ -6,6 +6,27 @@
 /// Translate a QMK keycode token to a human-readable label
 pub fn translate_token(tok: &str) -> String {
     let t = tok.trim();
+
+    // Normalize some malformed keypad tokens that may contain spaces or missing 'K'
+    // Examples seen: "KC_KP 0", "KC_P 1", "KC_KP_ 2"
+    let mut canonical = t.replace(' ', "");
+    let upper = canonical.to_uppercase();
+    if upper.starts_with("KC_KP") {
+        // Ensure underscore form: KC_KP_<REST>
+        let rest = &upper[5..];
+        let rest = rest.trim_start_matches('_');
+        if !rest.is_empty() {
+            canonical = format!("KC_KP_{}", rest);
+        }
+    } else if upper.starts_with("KC_P") {
+        // Accept aliases like KC_P0, KC_P 1 → treat as KC_KP_<REST>
+        let rest = &upper[4..];
+        if !rest.is_empty() {
+            let rest = rest.trim_start_matches('_');
+            canonical = format!("KC_KP_{}", rest);
+        }
+    }
+    let t = canonical.as_str();
     if t == "TRNS" || t == "NO" || t == "_______" || t == "KC_TRNS" || t == "KC_NO" {
         return String::new();
     }
@@ -310,6 +331,27 @@ fn translate_kc_keycodes(t: &str) -> Option<String> {
         // System keys
         "KC_PSCR" => Some("PrtSc".to_string()),
         "KC_APP" => Some("Menu".to_string()),
+
+        // Keypad (numpad) keys
+        "KC_KP_0" => Some("0".to_string()),
+        "KC_KP_1" => Some("1".to_string()),
+        "KC_KP_2" => Some("2".to_string()),
+        "KC_KP_3" => Some("3".to_string()),
+        "KC_KP_4" => Some("4".to_string()),
+        "KC_KP_5" => Some("5".to_string()),
+        "KC_KP_6" => Some("6".to_string()),
+        "KC_KP_7" => Some("7".to_string()),
+        "KC_KP_8" => Some("8".to_string()),
+        "KC_KP_9" => Some("9".to_string()),
+        "KC_KP_DOT" | "KC_KP_POINT" | "KC_KP_PERIOD" => Some(".".to_string()),
+        "KC_KP_COMMA" => Some(",".to_string()),
+        "KC_KP_PLUS" => Some("+".to_string()),
+        "KC_KP_MINUS" | "KC_KP_SUBTRACT" => Some("-".to_string()),
+        "KC_KP_ASTERISK" | "KC_KP_MULTIPLY" => Some("*".to_string()),
+        "KC_KP_SLASH" | "KC_KP_DIVIDE" => Some("/".to_string()),
+        "KC_KP_ENTER" => Some("Enter".to_string()),
+        "KC_KP_EQUAL" | "KC_KP_EQUAL_AS400" => Some("=".to_string()),
+        "KC_NUMLOCK" | "KC_NUM" | "KC_LOCKING_NUM" => Some("Num".to_string()),
         _ => None,
     }
 }

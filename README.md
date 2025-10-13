@@ -13,7 +13,7 @@ A cross-platform application for viewing and visualizing QMK keyboard layouts wi
 ## Features
 
 - **Universal QMK Support**: Works with any QMK keyboard by auto-detecting dimensions
-- **Comprehensive Keycode Mapping**: Supports all basic QMK keycodes with proper glyph conversion
+- **Comprehensive Keycode Mapping**: Supports all basic QMK keycodes
 - **Dynamic UI**: Automatically adapts to any keyboard size
 - **Cross-Platform**: Native builds for macOS, Windows, and Linux
 - **Layer Visualization**: View and switch between keyboard layers
