@@ -1,4 +1,4 @@
-name: Publish Homebrew Formula
+name: Publish Homebrew Formula (Multi-Arch)
 
 on:
   release:
@@ -16,14 +16,24 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/tags/}
           echo "TAG=$TAG" >> $GITHUB_ENV
-          echo "TARBALL_URL=https://github.com/thooams/qmk_viewer/archive/refs/tags/$TAG.tar.gz" >> $GITHUB_ENV
 
-      - name: Compute SHA256
+          # URLs pour les binaires Intel et ARM
+          echo "URL_INTEL=https://github.com/thooams/qmk_viewer/releases/download/$TAG/qmk_viewer-macos-intel.tar.gz" >> $GITHUB_ENV
+          echo "URL_ARM=https://github.com/thooams/qmk_viewer/releases/download/$TAG/qmk_viewer-macos-arm64.tar.gz" >> $GITHUB_ENV
+
+      - name: Compute SHA256 for Intel
         run: |
-          curl -L "$TARBALL_URL" -o source.tar.gz
-          SHA256=$(shasum -a 256 source.tar.gz | cut -d ' ' -f1)
-          echo "SHA256=$SHA256" >> $GITHUB_ENV
-          echo "Release TAG=$TAG, SHA256=$SHA256"
+          curl -L "$URL_INTEL" -o qmk_viewer-intel.tar.gz
+          SHA256_INTEL=$(shasum -a 256 qmk_viewer-intel.tar.gz | cut -d ' ' -f1)
+          echo "SHA256_INTEL=$SHA256_INTEL" >> $GITHUB_ENV
+          echo "SHA256 Intel: $SHA256_INTEL"
+
+      - name: Compute SHA256 for ARM
+        run: |
+          curl -L "$URL_ARM" -o qmk_viewer-arm.tar.gz
+          SHA256_ARM=$(shasum -a 256 qmk_viewer-arm.tar.gz | cut -d ' ' -f1)
+          echo "SHA256_ARM=$SHA256_ARM" >> $GITHUB_ENV
+          echo "SHA256 ARM: $SHA256_ARM"
 
       - name: Checkout Homebrew tap
         uses: actions/checkout@v4
@@ -37,19 +47,25 @@ jobs:
           mkdir -p tap/Formula
           FORMULA_FILE="tap/Formula/qmk_viewer.rb"
 
-          # Génère un fichier temporaire avec la nouvelle formule
+          # Génère le fichier temporaire avec multi-arch
           cat > temp_formula.rb <<'EOF'
 class QmkViewer < Formula
   desc "Visualiseur graphique pour keymaps QMK"
   homepage "https://github.com/thooams/qmk_viewer"
-  url "${TARBALL_URL}"
-  sha256 "${SHA256}"
   license "MIT"
 
-  depends_on "rust" => :build
+  on_intel do
+    url "${URL_INTEL}"
+    sha256 "${SHA256_INTEL}"
+  end
+
+  on_arm do
+    url "${URL_ARM}"
+    sha256 "${SHA256_ARM}"
+  end
 
   def install
-    system "cargo", "install", *std_cargo_args
+    bin.install "qmk-viewer"
   end
 
   test do
@@ -58,9 +74,11 @@ class QmkViewer < Formula
 end
 EOF
 
-          # Remplace les variables dans le Ruby
-          sed -i "s|\${TARBALL_URL}|${TARBALL_URL}|g" temp_formula.rb
-          sed -i "s|\${SHA256}|${SHA256}|g" temp_formula.rb
+          # Remplace les variables
+          sed -i "s|\${URL_INTEL}|${URL_INTEL}|g" temp_formula.rb
+          sed -i "s|\${URL_ARM}|${URL_ARM}|g" temp_formula.rb
+          sed -i "s|\${SHA256_INTEL}|${SHA256_INTEL}|g" temp_formula.rb
+          sed -i "s|\${SHA256_ARM}|${SHA256_ARM}|g" temp_formula.rb
 
           # Vérifie si le fichier existe et s'il a changé
           if [ -f "$FORMULA_FILE" ] && cmp -s temp_formula.rb "$FORMULA_FILE"; then
@@ -68,9 +86,8 @@ EOF
             exit 0
           fi
 
-          # Déplace le nouveau fichier
           mv temp_formula.rb "$FORMULA_FILE"
-          echo "Formule mise à jour avec TAG=$TAG et SHA256=$SHA256"
+          echo "Formule mise à jour avec TAG=$TAG, SHA256_INTEL=$SHA256_INTEL, SHA256_ARM=$SHA256_ARM"
 
       - name: Commit & push formula update
         run: |
@@ -80,4 +97,3 @@ EOF
           git add Formula/qmk_viewer.rb
           git commit -m "Update formula for ${TAG}" || echo "Rien à commit"
           git push origin main
-
