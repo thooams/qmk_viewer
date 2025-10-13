@@ -105,8 +105,6 @@ jobs:
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
   # Build des binaires (seulement si tests + release creation OK)
   build-linux:
