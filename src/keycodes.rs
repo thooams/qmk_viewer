@@ -11,18 +11,16 @@ pub fn translate_token(tok: &str) -> String {
     // Examples seen: "KC_KP 0", "KC_P 1", "KC_KP_ 2"
     let mut canonical = t.replace(' ', "");
     let upper = canonical.to_uppercase();
-    if upper.starts_with("KC_KP") {
+    if let Some(stripped) = upper.strip_prefix("KC_KP") {
         // Ensure underscore form: KC_KP_<REST>
-        let rest = &upper[5..];
-        let rest = rest.trim_start_matches('_');
+        let rest = stripped.trim_start_matches('_');
         if !rest.is_empty() {
             canonical = format!("KC_KP_{}", rest);
         }
-    } else if upper.starts_with("KC_P") {
+    } else if let Some(stripped) = upper.strip_prefix("KC_P") {
         // Accept aliases like KC_P0, KC_P 1 → treat as KC_KP_<REST>
-        let rest = &upper[4..];
+        let rest = stripped.trim_start_matches('_');
         if !rest.is_empty() {
-            let rest = rest.trim_start_matches('_');
             canonical = format!("KC_KP_{}", rest);
         }
     }
