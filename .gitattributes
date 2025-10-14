@@ -1,6 +1,9 @@
 # Set default behavior to automatically normalize line endings
 * text=auto
 
+# Force GitHub to recognize this as a Rust project
+*.rs linguist-language=Rust
+
 # Rust source files
 *.rs text
 Cargo.toml text
