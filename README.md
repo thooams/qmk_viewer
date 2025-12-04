@@ -6,17 +6,6 @@
 
 A cross-platform application for viewing and visualizing QMK keyboard layouts with support for any QMK-compatible keyboard.
 
-## Demo
-## Installation (macOS via Homebrew)
-
-```bash
-brew tap thooams/qmkviewer
-brew install qmk_viewer
-
-brew upgrade qmk_viewer
-```
-
-
 ![demo.gif](demo.gif)
 
 ## Features
@@ -29,6 +18,184 @@ brew upgrade qmk_viewer
 - **Real-time Updates**: Live keyboard state monitoring (when connected)
 - **File Loading**: Load keymap files directly (.json, .c, .h formats)
 - **Interactive Interface**: Browse and load keymap files with visual feedback
+
+## Installation
+
+### macOS
+
+#### Via Homebrew (Recommended)
+
+```bash
+brew tap thooams/qmkviewer
+brew install qmk_viewer
+
+# To upgrade
+brew upgrade qmk_viewer
+```
+
+#### Manual Installation
+
+Download the latest `.dmg` or `.app` bundle from the [releases page](https://github.com/thooams/qmk_viewer/releases), then:
+1. Open the `.dmg` file
+2. Drag the application to your Applications folder
+3. Launch from Applications or Spotlight
+
+### Linux
+
+#### Pre-built AppImage
+
+1. Download the latest `.AppImage` from the [releases page](https://github.com/thooams/qmk_viewer/releases)
+2. Make it executable: `chmod +x QMK_Keyboard_Viewer-*.AppImage`
+3. Run it: `./QMK_Keyboard_Viewer-*.AppImage`
+
+#### Build from Source
+
+**Prerequisites:**
+- Rust (install via [rustup](https://rustup.rs/))
+- Development libraries:
+  ```bash
+  # Debian/Ubuntu
+  sudo apt-get install libgtk-3-dev libusb-1.0-0-dev libudev-dev
+
+  # Fedora
+  sudo dnf install gtk3-devel libusb1-devel systemd-devel
+
+  # Arch
+  sudo pacman -S gtk3 libusb systemd
+  ```
+
+**Build:**
+```bash
+git clone https://github.com/thooams/qmk_viewer.git
+cd qmk_viewer
+./scripts/build-linux.sh
+# Binary will be in dist/linux/
+```
+
+### Windows
+
+#### Pre-built Executable
+
+1. Download the latest `.exe` from the [releases page](https://github.com/thooams/qmk_viewer/releases)
+2. Run the executable (you may need to allow it in Windows Defender)
+
+#### Build from Source
+
+**Prerequisites:**
+- Rust (install via [rustup](https://rustup.rs/))
+- [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) with C++ development tools
+
+**Build:**
+```powershell
+git clone https://github.com/thooams/qmk_viewer.git
+cd qmk_viewer
+.\scripts\build-windows.ps1
+# Binary will be in dist\windows\
+```
+
+## QMK Keyboard Configuration
+
+To enable real-time communication between your QMK keyboard and the application, you need to configure your keyboard firmware. This configuration is **essential for the interactive features** to work.
+
+> **Note on Multi-File Keyboards**: If your keyboard uses multiple source files (e.g., `keyboard.c` plus supplemental files), the QMK build system will handle all of them automatically. The viewer works with the compiled keymap output, so no special configuration is needed for multi-file setups.
+
+### Raw HID Support (Recommended)
+
+Add the following to your `rules.mk`:
+```makefile
+# Enable Raw HID for real-time communication
+RAW_ENABLE = yes
+```
+
+Add this to your `keymap.c`:
+```c
+#include "raw_hid.h"
+
+// Send keyboard state to the application
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+    // Handle incoming data from the application if needed
+}
+
+// Call this function to send keyboard state
+void send_keyboard_state(void) {
+    uint8_t data[32] = {0};
+
+    // Pack the data: [layer][pressed_bits...]
+    data[0] = get_highest_layer(layer_state);
+
+    // Pack pressed keys into bits (up to 32 keys)
+    for (int i = 0; i < 32 && i < MATRIX_ROWS * MATRIX_COLS; i++) {
+        uint8_t row = i / MATRIX_COLS;
+        uint8_t col = i % MATRIX_COLS;
+        if (matrix_is_on(row, col)) {
+            data[1 + (i / 8)] |= (1 << (i % 8));
+        }
+    }
+
+    raw_hid_send(data, 32);
+}
+
+// Call this in your matrix scan or layer change functions
+void matrix_scan_user(void) {
+    static uint32_t last_send = 0;
+    if (timer_elapsed32(last_send) > 50) { // Send every 50ms
+        send_keyboard_state();
+        last_send = timer_read32();
+    }
+}
+```
+
+### QMK Console Support (Alternative)
+
+Add the following to your `rules.mk`:
+```makefile
+# Enable console for serial communication
+CONSOLE_ENABLE = yes
+```
+
+Add this to your `keymap.c`:
+```c
+#include "print.h"
+
+// Send keyboard state via console
+void send_console_state(void) {
+    // Send layer and pressed keys
+    uprintf("LAYER:%d\n", get_highest_layer(layer_state));
+
+    // Send pressed keys
+    for (int row = 0; row < MATRIX_ROWS; row++) {
+        for (int col = 0; col < MATRIX_COLS; col++) {
+            if (matrix_is_on(row, col)) {
+                uprintf("PRESS:%d,%d\n", row, col);
+            }
+        }
+    }
+    uprintf("END\n");
+}
+
+// Call this in your matrix scan function
+void matrix_scan_user(void) {
+    static uint32_t last_send = 0;
+    if (timer_elapsed32(last_send) > 100) { // Send every 100ms
+        send_console_state();
+        last_send = timer_read32();
+    }
+}
+```
+
+### Building and Flashing Your Firmware
+
+After adding the configuration:
+
+```bash
+# Build your keyboard firmware
+qmk compile -kb your_keyboard -km your_keymap
+
+# Flash to your keyboard
+qmk flash -kb your_keyboard -km your_keymap
+```
+
+**Note**: The application will automatically detect and connect to your keyboard when the appropriate feature is enabled (`--features rawhid` or `--features qmk_console`).
 
 ## Quick Start
 
@@ -148,108 +315,6 @@ cargo run path/to/keymap.json
 **Example files:**
 - `tests/files/test_keymap.json` - Sample JSON keymap
 - `tests/files/test_keymap.c` - Sample C keymap
-
-### QMK Keyboard Configuration
-
-To enable real-time communication between your QMK keyboard and the application, you need to configure your keyboard firmware:
-
-#### Raw HID Support
-
-Add the following to your `rules.mk`:
-```makefile
-# Enable Raw HID for real-time communication
-RAW_ENABLE = yes
-```
-
-Add this to your `keymap.c`:
-```c
-#include "raw_hid.h"
-
-// Send keyboard state to the application
-void raw_hid_receive(uint8_t *data, uint8_t length) {
-    // Handle incoming data from the application if needed
-}
-
-// Call this function to send keyboard state
-void send_keyboard_state(void) {
-    uint8_t data[32] = {0};
-
-    // Pack the data: [layer][pressed_bits...]
-    data[0] = get_highest_layer(layer_state);
-
-    // Pack pressed keys into bits (up to 32 keys)
-    for (int i = 0; i < 32 && i < MATRIX_ROWS * MATRIX_COLS; i++) {
-        uint8_t row = i / MATRIX_COLS;
-        uint8_t col = i % MATRIX_COLS;
-        if (matrix_is_on(row, col)) {
-            data[1 + (i / 8)] |= (1 << (i % 8));
-        }
-    }
-
-    raw_hid_send(data, 32);
-}
-
-// Call this in your matrix scan or layer change functions
-void matrix_scan_user(void) {
-    static uint32_t last_send = 0;
-    if (timer_elapsed32(last_send) > 50) { // Send every 50ms
-        send_keyboard_state();
-        last_send = timer_read32();
-    }
-}
-```
-
-#### QMK Console Support
-
-Add the following to your `rules.mk`:
-```makefile
-# Enable console for serial communication
-CONSOLE_ENABLE = yes
-```
-
-Add this to your `keymap.c`:
-```c
-#include "print.h"
-
-// Send keyboard state via console
-void send_console_state(void) {
-    // Send layer and pressed keys
-    uprintf("LAYER:%d\n", get_highest_layer(layer_state));
-
-    // Send pressed keys
-    for (int row = 0; row < MATRIX_ROWS; row++) {
-        for (int col = 0; col < MATRIX_COLS; col++) {
-            if (matrix_is_on(row, col)) {
-                uprintf("PRESS:%d,%d\n", row, col);
-            }
-        }
-    }
-    uprintf("END\n");
-}
-
-// Call this in your matrix scan function
-void matrix_scan_user(void) {
-    static uint32_t last_send = 0;
-    if (timer_elapsed32(last_send) > 100) { // Send every 100ms
-        send_console_state();
-        last_send = timer_read32();
-    }
-}
-```
-
-#### Building and Flashing
-
-After adding the configuration:
-
-```bash
-# Build your keyboard firmware
-qmk compile -kb your_keyboard -km your_keymap
-
-# Flash to your keyboard
-qmk flash -kb your_keyboard -km your_keymap
-```
-
-**Note**: The application will automatically detect and connect to your keyboard when the appropriate feature is enabled (`--features rawhid` or `--features qmk_console`).
 
 ### Interface Features
 
